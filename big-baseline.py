@@ -727,6 +727,21 @@ experiments_results = []
 torch.cuda.ipc_collect()
 torch.cuda.empty_cache()
 
+hf_datasets = load_data_hf()
+
+all_ds_train = [ds["train"] for ds in hf_datasets.values()]
+all_ds_val = [ds["validation"] for ds in hf_datasets.values()]
+all_ds_test = [ds["test"] for ds in hf_datasets.values()]
+
+all_train = concatenate_datasets(all_ds_train)
+all_val = concatenate_datasets(all_ds_val)
+
+merged_data = DatasetDict({
+    "train": all_train,
+    "validation":all_val
+    })
+
+
 for model_id in model_ids:
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoContinualLearner(model_id, num_labels=2, device=device)
@@ -736,21 +751,6 @@ for model_id in model_ids:
     if model_id == "Xuhui/ToxDect-roberta-large":
         batch_size = 24
         lr = 5e-05
-
-
-    hf_datasets = load_data_hf()
-
-    all_ds_train = [ds["train"] for ds in hf_datasets.values()]
-    all_ds_val = [ds["validation"] for ds in hf_datasets.values()]
-    all_ds_test = [ds["test"] for ds in hf_datasets.values()]
-
-    all_train = concatenate_datasets(all_ds_train)
-    all_val = concatenate_datasets(all_ds_val)
-
-    merged_data = DatasetDict({
-        "train": all_train,
-        "validation":all_val
-        })
 
     def tokenize_function(batch: Dict[str, List]):
             return tokenizer(
@@ -815,5 +815,8 @@ for model_id in model_ids:
         print("Result couldn't be saved.")
         print(e)
 
-    # results["json_name"] = experiment_json_name
-    # experiments_results.append(results)
+    results["json_name"] = experiment_json_name
+    experiments_results.append(results)
+
+print("----------------------------------------")
+print(experiments_results)
