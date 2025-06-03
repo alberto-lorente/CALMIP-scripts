@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -J big_baseline
+#SBATCH -J my_job_name
 #SBATCH -N 1
-#SBATCH -n 5
-#SBATCH --ntasks-per-node=5
+#SBATCH -n 9
+#SBATCH --ntasks-per-node=9
 #SBATCH --ntasks-per-core=1
-#SBATCH --mem=16000
-#SBATCH --time=06:00:00
-#SBATCH --mail-user=albertolorente97to@gmail.com
+#SBATCH --gres=gpu:1
+#SBATCH --mem=20000
+#SBATCH --time=01:00:00
