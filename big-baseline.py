@@ -707,11 +707,15 @@ load_dotenv("env_vars.env")
 # print(whoami()["name"])
 
 
-model_ids =  os.listdir("Models")
-model_paths = [os.path.join("Models", model_id) for model_id in model_ids]
+model_ids =     [
+                "FacebookAI/roberta-base",
+                "Xuhui/ToxDect-roberta-large",
+                "diptanu/fBERT",
+                "GroNLP/hateBERT"
+                ]
 
 
-model_id = model_paths[0]
+model_id = model_ids[0]
 type_experiment = "big_train_baseline"
 
 loss_f = CrossEntropyLoss()
