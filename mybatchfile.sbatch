@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -J big_baseline
-#SBATCH -N 2
+#SBATCH -N 1
 #SBATCH -n 72
-#SBATCH --ntasks-per-node=36
+#SBATCH --ntasks-per-node=72
 #SBATCH --ntasks-per-core=1
 #SBATCH --gres=gpu:4
 #SBATCH --time=06:00:00
