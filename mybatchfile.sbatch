@@ -7,5 +7,5 @@
 #SBATCH --gres=gpu:2
 #SBATCH --mem=200000
 #SBATCH --time=06:00:00
-SBATCH --mail-user=albertolorente97@gmail.com
+#SBATCH --mail-user=albertolorente97@gmail.com
 
