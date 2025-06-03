@@ -743,6 +743,10 @@ merged_data = DatasetDict({
 
 
 for model_id in model_ids:
+    
+    torch.cuda.ipc_collect()
+    torch.cuda.empty_cache()
+
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoContinualLearner(model_id, num_labels=2, device=device)
     optimizer = AdamW(model.model.parameters(), lr=lr)
@@ -767,12 +771,17 @@ for model_id in model_ids:
     filter_datasets = [ds.rename_column("label", "labels") for ds in tokenized_datasets]
     format_ds_for_torch(filter_datasets, validate_format=False)
 
+    torch.cuda.ipc_collect()
+    torch.cuda.empty_cache()
 
     tests = dict(zip(hf_datasets.keys(), all_ds_test))
     preprocessed_ds_test = [ds.map(preprocessing_pipeline, batched=True) for name, ds in tests.items()]
     tokenized_datasets_test = [ds.map(tokenize_function, batched=True, remove_columns=cols_to_remove) for ds in preprocessed_ds_test]
     filter_datasets_test = [ds.rename_column("label", "labels") for ds in tokenized_datasets_test]
     format_ds_for_torch(filter_datasets_test, validate_format=False)
+
+    torch.cuda.ipc_collect()
+    torch.cuda.empty_cache()
 
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
@@ -783,6 +792,7 @@ for model_id in model_ids:
     test_loaders = []
     for ds in filter_datasets_test:
         test_loader = DataLoader(ds, batch_size=batch_size, shuffle=True, collate_fn=data_collator)
+        torch.cuda.empty_cache()
         test_loaders.append(test_loader)
 
     results, model =  train( model=model,
@@ -811,6 +821,7 @@ for model_id in model_ids:
     try:
         with open(experiment_json_name, "w") as f:
             json.dump(results, f, indent=4)
+            print(results)
     except Exception as e:
         print("Result couldn't be saved.")
         print(e)
