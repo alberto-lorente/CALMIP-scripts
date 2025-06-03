@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J my_job_name
+#SBATCH -J big_baseline
 #SBATCH -N 1
 #SBATCH -n 9
 #SBATCH --ntasks-per-node=9
