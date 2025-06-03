@@ -11,6 +11,6 @@
 module load conda/24.11.1
 conda activate hate
 
-cd /gale/hf_finetuning
+cd /tmpdir/gale/hf_finetuning
 python3 big-baseline.py
 
