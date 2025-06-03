@@ -6,4 +6,11 @@
 #SBATCH --ntasks-per-core=1
 #SBATCH --gres=gpu:1
 #SBATCH --mem=20000
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
+
+module load conda/24.11.1
+conda activate hate
+
+cd /gale/hf_finetuning
+python3 big-baseline.py
+
