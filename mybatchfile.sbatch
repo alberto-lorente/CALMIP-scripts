@@ -12,6 +12,6 @@ module load conda/24.11.1
 conda activate hate
 
 echo "$PWD"
-cd /tmpdir/gale/hf_finetuning
+cd ..
 python3 big-baseline.py
 
