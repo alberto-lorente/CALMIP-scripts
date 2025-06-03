@@ -714,8 +714,6 @@ model_ids =     [
                 "GroNLP/hateBERT"
                 ]
 
-
-model_id = model_ids[0]
 type_experiment = "big_train_baseline"
 
 loss_f = CrossEntropyLoss()
@@ -729,93 +727,93 @@ experiments_results = []
 torch.cuda.ipc_collect()
 torch.cuda.empty_cache()
 
+for model_id in model_ids:
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoContinualLearner(model_id, num_labels=2, device=device)
+    optimizer = AdamW(model.model.parameters(), lr=lr)
+    trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) 
 
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoContinualLearner(model_id, num_labels=2, device=device)
-optimizer = AdamW(model.model.parameters(), lr=lr)
-trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) 
-
-if model_id == "Xuhui/ToxDect-roberta-large":
-    batch_size = 24
-    lr = 5e-05
-
-
-hf_datasets = load_data_hf()
-
-all_ds_train = [ds["train"] for ds in hf_datasets.values()]
-all_ds_val = [ds["validation"] for ds in hf_datasets.values()]
-all_ds_test = [ds["test"] for ds in hf_datasets.values()]
-
-all_train = concatenate_datasets(all_ds_train)
-all_val = concatenate_datasets(all_ds_val)
-
-merged_data = DatasetDict({
-    "train": all_train,
-    "validation":all_val
-    })
-
-def tokenize_function(batch: Dict[str, List]):
-        return tokenizer(
-            text=batch["text"],
-            truncation=True,
-            padding=True)
+    if model_id == "Xuhui/ToxDect-roberta-large":
+        batch_size = 24
+        lr = 5e-05
 
 
-cols_to_remove = ['text', 'source', 'hs_domain', 'split']
-preprocessed_ds = [ds.map(preprocessing_pipeline, batched=True) for name, ds in merged_data.items()]
-# doing the for above splits the ds in two, i could do it without it
-tokenized_datasets = [ds.map(tokenize_function, batched=True, remove_columns=cols_to_remove) for ds in preprocessed_ds]
-dataset_names = list(merged_data.keys())
-filter_datasets = [ds.rename_column("label", "labels") for ds in tokenized_datasets]
-format_ds_for_torch(filter_datasets, validate_format=False)
+    hf_datasets = load_data_hf()
+
+    all_ds_train = [ds["train"] for ds in hf_datasets.values()]
+    all_ds_val = [ds["validation"] for ds in hf_datasets.values()]
+    all_ds_test = [ds["test"] for ds in hf_datasets.values()]
+
+    all_train = concatenate_datasets(all_ds_train)
+    all_val = concatenate_datasets(all_ds_val)
+
+    merged_data = DatasetDict({
+        "train": all_train,
+        "validation":all_val
+        })
+
+    def tokenize_function(batch: Dict[str, List]):
+            return tokenizer(
+                text=batch["text"],
+                truncation=True,
+                padding=True)
 
 
-tests = dict(zip(hf_datasets.keys(), all_ds_test))
-preprocessed_ds_test = [ds.map(preprocessing_pipeline, batched=True) for name, ds in tests.items()]
-tokenized_datasets_test = [ds.map(tokenize_function, batched=True, remove_columns=cols_to_remove) for ds in preprocessed_ds_test]
-filter_datasets_test = [ds.rename_column("label", "labels") for ds in tokenized_datasets_test]
-format_ds_for_torch(filter_datasets_test, validate_format=False)
+    cols_to_remove = ['text', 'source', 'hs_domain', 'split']
+    preprocessed_ds = [ds.map(preprocessing_pipeline, batched=True) for name, ds in merged_data.items()]
+    # doing the for above splits the ds in two, i could do it without it
+    tokenized_datasets = [ds.map(tokenize_function, batched=True, remove_columns=cols_to_remove) for ds in preprocessed_ds]
+    dataset_names = list(merged_data.keys())
+    filter_datasets = [ds.rename_column("label", "labels") for ds in tokenized_datasets]
+    format_ds_for_torch(filter_datasets, validate_format=False)
 
 
-data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+    tests = dict(zip(hf_datasets.keys(), all_ds_test))
+    preprocessed_ds_test = [ds.map(preprocessing_pipeline, batched=True) for name, ds in tests.items()]
+    tokenized_datasets_test = [ds.map(tokenize_function, batched=True, remove_columns=cols_to_remove) for ds in preprocessed_ds_test]
+    filter_datasets_test = [ds.rename_column("label", "labels") for ds in tokenized_datasets_test]
+    format_ds_for_torch(filter_datasets_test, validate_format=False)
 
-dataloader_train    = DataLoader(filter_datasets[0], batch_size=batch_size, shuffle=True, collate_fn=data_collator)
-dataloader_validate = DataLoader(filter_datasets[1], batch_size=batch_size, shuffle=True, collate_fn=data_collator)
 
-test_loaders = []
-for ds in filter_datasets_test:
-    test_loader = DataLoader(ds, batch_size=batch_size, shuffle=True, collate_fn=data_collator)
-    test_loaders.append(test_loader)
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
-results, model =  train( model=model,
-                        model_id=model_id,
-                        train_loader=dataloader_train,
-                        val_loader=dataloader_validate,
-                        epochs=epochs,
-                        loss_f=loss_f,
-                        optimizer=optimizer,
-                        cut_batch=cut_batch,
-                        trainable_params=trainable_params,
-                        lr=lr,
-                        batch_size=batch_size,
-                        num_samples="all",
-                        type_experiment=type_experiment,
-                        cl_technique="big baseline",
-                        time=0,
-                        training_order=["all_at_once"],
-                        testing_order=list(hf_datasets.keys()),
-                        test_loaders=test_loaders,
-                        exp_setup=exp_setup
-                        )
+    dataloader_train    = DataLoader(filter_datasets[0], batch_size=batch_size, shuffle=True, collate_fn=data_collator)
+    dataloader_validate = DataLoader(filter_datasets[1], batch_size=batch_size, shuffle=True, collate_fn=data_collator)
 
-experiment_json_name = "_".join([type_experiment, model_id.replace("/", "-"), "big_train_ft"]) + ".json"
+    test_loaders = []
+    for ds in filter_datasets_test:
+        test_loader = DataLoader(ds, batch_size=batch_size, shuffle=True, collate_fn=data_collator)
+        test_loaders.append(test_loader)
 
-try:
-    with open(experiment_json_name, "w") as f:
-        json.dump(results, f, indent=4)
-except Exception as e:
-    print("Result couldn't be saved.")
-    print(e)
+    results, model =  train( model=model,
+                            model_id=model_id,
+                            train_loader=dataloader_train,
+                            val_loader=dataloader_validate,
+                            epochs=epochs,
+                            loss_f=loss_f,
+                            optimizer=optimizer,
+                            cut_batch=cut_batch,
+                            trainable_params=trainable_params,
+                            lr=lr,
+                            batch_size=batch_size,
+                            num_samples="all",
+                            type_experiment=type_experiment,
+                            cl_technique="big baseline",
+                            time=0,
+                            training_order=["all_at_once"],
+                            testing_order=list(hf_datasets.keys()),
+                            test_loaders=test_loaders,
+                            exp_setup=exp_setup
+                            )
 
-results["json_name"] = experiment_json_name
-experiments_results.append(results)
+    experiment_json_name = "_".join([type_experiment, model_id.replace("/", "-"), "big_train_ft"]) + ".json"
+
+    try:
+        with open(experiment_json_name, "w") as f:
+            json.dump(results, f, indent=4)
+    except Exception as e:
+        print("Result couldn't be saved.")
+        print(e)
+
+    # results["json_name"] = experiment_json_name
+    # experiments_results.append(results)
