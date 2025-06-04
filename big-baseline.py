@@ -753,7 +753,8 @@ for model_id in model_ids:
     trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) 
 
     if model_id == "Xuhui/ToxDect-roberta-large":
-        batch_size = 16
+        batch_size = 12
+        print(batch_size)
         lr = 5e-05
 
     def tokenize_function(batch: Dict[str, List]):
