@@ -6,7 +6,7 @@
 #SBATCH --ntasks-per-core=1
 #SBATCH --gres=gpu:2
 #SBATCH --mem=20000
-#SBATCH --time=08:00:00
+#SBATCH --time=12:00:00
 
 module load conda/24.11.1
 conda activate hate
