@@ -973,7 +973,7 @@ for experiment in experiments_cl:
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoContinualLearner(model_id, num_labels=2, device=device)
 
-    if model_id == "Xuhui/ToxDect-roberta-large":
+    if model_id == "Xuhui/ToxDect-roberta-large": # OTHER TOXBERTA WHERE 24
         batch_size = 16
         lr = 5e-05
 
