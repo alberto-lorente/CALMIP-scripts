@@ -709,7 +709,7 @@ load_dotenv("env_vars.env")
 
 model_ids =     [
                 # "FacebookAI/roberta-base",
-                "Xuhui/ToxDect-roberta-large",
+                # "Xuhui/ToxDect-roberta-large",
                 "diptanu/fBERT",
                 "GroNLP/hateBERT"
                 ]
@@ -753,7 +753,7 @@ for model_id in model_ids:
     trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) 
 
     if model_id == "Xuhui/ToxDect-roberta-large":
-        batch_size = 12
+        batch_size = 8
         print(batch_size)
         lr = 5e-05
 
