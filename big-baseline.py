@@ -708,7 +708,7 @@ load_dotenv("env_vars.env")
 
 
 model_ids =     [
-                "FacebookAI/roberta-base",
+                # "FacebookAI/roberta-base",
                 "Xuhui/ToxDect-roberta-large",
                 "diptanu/fBERT",
                 "GroNLP/hateBERT"
@@ -753,7 +753,7 @@ for model_id in model_ids:
     trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) 
 
     if model_id == "Xuhui/ToxDect-roberta-large":
-        batch_size = 24
+        batch_size = 16
         lr = 5e-05
 
     def tokenize_function(batch: Dict[str, List]):
