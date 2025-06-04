@@ -293,8 +293,8 @@ def test(model,
     log_test["time"] =                         int(time)
     log_test["dataset"] =                      current_testing_dataset
     log_test["curr_train"] =                   current_training_dataset
-    log_test["curr_train_hate_type"] =         exp_setup["general_ds_categories"][current_training_dataset]
-    log_test["curr_train_mix_type"] =          exp_setup["mixtures_ds"][current_training_dataset]
+    log_test["curr_train_hate_type"] =         "all"
+    log_test["curr_train_mix_type"] =          "all"
     log_test["hate_type_test"] =               exp_setup["general_ds_categories"][current_testing_dataset]
     log_test["mixture_test"] =                 exp_setup["mixtures_ds"][current_testing_dataset]
     log_test["n_epochs_per_experience"] =      int(epochs)
