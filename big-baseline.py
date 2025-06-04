@@ -795,7 +795,7 @@ for model_id in model_ids:
         torch.cuda.empty_cache()
         test_loaders.append(test_loader)
 
-    results, model =  train( model=model,
+    model, train_val_log, tests =  train( model=model,
                             model_id=model_id,
                             train_loader=dataloader_train,
                             val_loader=dataloader_validate,
@@ -815,6 +815,9 @@ for model_id in model_ids:
                             test_loaders=test_loaders,
                             exp_setup=exp_setup
                             )
+    results = {"time": 0,
+            "train_val": train_val_log,
+            "test":tests}
 
     experiment_json_name = "_".join([type_experiment, model_id.replace("/", "-"), "big_train_ft"]) + ".json"
 
