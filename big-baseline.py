@@ -718,7 +718,7 @@ type_experiment = "big_train_baseline"
 
 loss_f = CrossEntropyLoss()
 lr = 1e-5
-batch_size = 64
+batch_size = 32
 cut_batch = False
 epochs = 8
 experiments_results = []
