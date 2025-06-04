@@ -890,20 +890,20 @@ model_ids =     [
                 ]
 
 data_set_up =   [
-        {       "type":"alternate_mis_raci",
-                "train_test": ["evalita", "waseem-racism", "ibereval", "hateval-immigrant"],
-                "zero": ["davidson", "founta_hateful_57k", "hateval-women", "waseem-sexism"],
-                "epochs_array": [8, 8, 8, 8],
-                "training_ks":  None,
+        # {       "type":"alternate_mis_raci",
+        #         "train_test": ["evalita", "waseem-racism", "ibereval", "hateval-immigrant"],
+        #         "zero": ["davidson", "founta_hateful_57k", "hateval-women", "waseem-sexism"],
+        #         "epochs_array": [8, 8, 8, 8],
+        #         "training_ks":  None,
 
-        },
-        {
-                "type":"from_rac_to_mis",
-                "train_test": ["hateval-immigrant", "waseem-racism", "ibereval"],
-                "zero": ["davidson", "founta_hateful_57k", "evalita", "hateval-women", "waseem-sexism"],
-                "epochs_array": [8, 8, 8],
-                "training_ks": None,
-        },
+        # },
+        # {
+        #         "type":"from_rac_to_mis",
+        #         "train_test": ["hateval-immigrant", "waseem-racism", "ibereval"],
+        #         "zero": ["davidson", "founta_hateful_57k", "evalita", "hateval-women", "waseem-sexism"],
+        #         "epochs_array": [8, 8, 8],
+        #         "training_ks": None,
+        # },
 
         {       "type":"from_general_to_alternating_miso_raci",
                 "train_test": ["davidson", "founta_hateful_57k", "ibereval", "hateval-immigrant", "hateval-women", "waseem-racism"],
