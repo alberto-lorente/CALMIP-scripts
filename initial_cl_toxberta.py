@@ -12,6 +12,7 @@ from datetime import date, datetime
 import emoji
 import re
 import html
+import gc
 
 import pandas as pd
 import numpy as np
@@ -566,7 +567,8 @@ def train(  model,
     optimizer = torch.optim.AdamW(model.model.parameters(), lr=lr)
 
     for epoch in range(epochs):
-
+        gc.collect()
+        torch.cuda.empty_cache()
         if cl_technique == "zero_shot":
             break # uncomment for zero-shot perf
 
@@ -791,8 +793,8 @@ def continual_learning( model,
     print("------------------Starting Experience----------------")
     print(f"------------------TIME {time}------------------------")
     print()
-    # torch.cuda.ipc_collect()
-    # torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
+    torch.cuda.empty_cache()
     epochs = epochs_array[time]
     if ks_array != None:
       num_samples = ks_array[time]
@@ -953,7 +955,7 @@ hf_datasets = load_data_hf()
 
 loss_f = CrossEntropyLoss()
 lr = 1e-5
-batch_size = 32
+batch_size = 16
 filter_cl_techniques = [cl_techniques[:-2]]
 cut_batch = False
 
@@ -972,7 +974,7 @@ for experiment in experiments_cl:
     model = AutoContinualLearner(model_id, num_labels=2, device=device)
 
     if model_id == "Xuhui/ToxDect-roberta-large":
-        batch_size = 24
+        batch_size = 16
         lr = 5e-05
 
     if cl_technique in filter_cl_techniques:
