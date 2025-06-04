@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J my_job_name
+#SBATCH -J roberta
 #SBATCH -N 1
 #SBATCH -n 36
 #SBATCH --ntasks-per-node=36
@@ -13,5 +13,5 @@ conda activate hate
 
 echo "$PWD"
 cd ..
-python3 initial_cl.py
+python3 initial_cl_roberta.py
 

@@ -884,9 +884,9 @@ load_dotenv("env_vars.env")
 
 model_ids =     [
                 # "FacebookAI/roberta-base",
-                "Xuhui/ToxDect-roberta-large",
-                "diptanu/fBERT",
-                "GroNLP/hateBERT"
+                "Xuhui/ToxDect-roberta-large"
+                # "diptanu/fBERT",
+                # "GroNLP/hateBERT"
                 ]
 
 data_set_up =   [
