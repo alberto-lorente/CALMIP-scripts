@@ -33,13 +33,6 @@ from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_sco
 # Alternatively, go to: https://pytorch.org to install a PyTorch version that has been compiled with your version of the CUDA driver. (Triggered internally at  ../c10/cuda/CUDAFunctions.cpp:112.)
 
 
-
-# def log_hf():
-#     load_dotenv("env_vars.env")
-#     hf_token = os.environ.get("HF_ACCESS_TOKEN")
-#     HfFolder.save_token(hf_token)
-#     return print(whoami()["name"])
-
 def save_results_csv(df, experiment_name, model_id, cl_technique, result_type="specific"):
 
     cl_technique_clean = cl_technique.replace(" + ", "__")
@@ -74,11 +67,7 @@ def load_data_hf(hate_cat_filter=None):
                                                             sexism]
     """
     ds_folder_path = "Datasets"
-    # print(ds_folder_path)
-    # print(ds_folder_path)
     list_dirs_clean = os.listdir(ds_folder_path)
-    # print(list_dirs_clean)
-    print(list_dirs_clean)
     datasets = {ds: load_from_disk(os.path.join(ds_folder_path, ds)) for ds in list_dirs_clean}
     return datasets
 
