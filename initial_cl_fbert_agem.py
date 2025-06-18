@@ -934,6 +934,8 @@ for experiment in experiments_cl:
     # torch.cuda.ipc_collect()
     # torch.cuda.empty_cache()
 
+    print("Experiment: ", experiment)
+
     model_id = experiment[0]
     cl_technique = experiment[-1]
     # print(cl_technique)

@@ -1,0 +1,930 @@
+{
+    "davidson": {
+        "iteration_0": {
+            "2_shots": {
+                "positive_examples": [
+                    "Can't stand bitch ass niggas."
+                ],
+                "negative_examples": [
+                    "@sevensixxx_ @oldirtyjesus great reply except it was trash"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "#TrayvonMartin referred to Zimmerman as a \"creepy ass cracker\". Racist thug.",
+                    "niggas ain't playin a gram of defense man George need to tell these bitch ass niggas man up",
+                    "@aravosis May I jump in u ball-less dick-wad? As a conservative, feminist, disabled vet bitch, I wish u luck with a capital F. @DLoesch"
+                ],
+                "negative_examples": [
+                    "RT @DumbTo: Polly want a cracker? #DumbTo http://t.co/zC8MlwnEUc",
+                    "RT @Herman_NYRBlog: Yankees shouldn't even bother to show up to Boston, man. Just fold the franchise. Cancel baseball.",
+                    "RT @gferguson8: @MSoltan18 @WBDyllon_ @KoredeB9 Messi is trash"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "RT @connorbagen: You know she's a dyke when she asks for men's golf clubs",
+                    "RT @Kidd_BravO615: Nigga wanna bitch about a party y'all know my address knock at my door",
+                    "RT @dxpperjay: You assholes know that referring to a girl as \"bitch\" doesn't make your dick any bigger, right?",
+                    "@MakeAnothaHov T.o. was a faggot crybaby",
+                    "@DarienDaywalt bitch shut the fuck up goddam your a slut bitch whore nigga"
+                ],
+                "negative_examples": [
+                    "@Liveitupjersey @ccass357 don't trash Jersey...ODDS ARE..YOU WOULDN'T LAST 10 MINUTES AROUND HERE!  Go back to watching BARNEY!",
+                    "I can't take you serious if you wear colored contacts.",
+                    "@selina_dabbagh the song? About pollo hermanos and Heisenberg?",
+                    "RT @babiesdressup: What a silly little monkey &#128584; http://t.co/DMKLK4k147",
+                    "@jesslaw Ha! I'm actually going to see a Yankee game, as weird as it sounds. My uncle's house in NJ is an hour away."
+                ]
+            }
+        },
+        "iteration_1": {
+            "2_shots": {
+                "positive_examples": [
+                    "@RepGutierrez You are full of it! These so called children are not children. They are illegal border jumpers MS!# gang members."
+                ],
+                "negative_examples": [
+                    "Don't really care if a fighters black, white, yellow or Dalmatian. If he is good he is good."
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "Your pathetic plan failed. Enjoy my phone you fucking monkey. Let me see your ass at Benton park. You wanna talk shit I'll carve your face.",
+                    "Lol, so since I'm from the south I automatically sound like a fucking redneck. Hahahaha how about fuck you, stupid ass.",
+                    "@bitchdicknigga you're a fucking nigger"
+                ],
+                "negative_examples": [
+                    "@dabbba @Pinchehonkey Far as I can tell coon tracks on the cab door window - tractor was parked by some trees away from home",
+                    "What manner of black folk take their kids riding in the ghetto to point out misplaced youth and victimized &amp; cursed brethren and say:",
+                    "I'll give you a baby zebra girl."
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "@Briana_Rashae I'd like to rape the bitch that posted that.",
+                    "@asshole_king pats owner is a kike.",
+                    "I still think snap chat for faggots and High Schoolers",
+                    "Good Morning to lightskin dyke bitches with Steven Segal ponytails.",
+                    "@jayswaggkillah: Jackies a retard #blondeproblems At least I can make a grilled cheese!"
+                ],
+                "negative_examples": [
+                    "RT @OTRAUpdates2015: Rumours that the boys will be touring around the world for OTRA Tour and it will end in the UK/Ireland as a welcome ho&#8230;",
+                    "RT @SpacePlankton: Saw a man in a yellow hat at the Grand Canyon today. He was hanging out next to a curious gorge.",
+                    "RT @ItsChee_: Whipped https://t.co/uCV3Hrjatv",
+                    "@hardball @now @hardball_chris now jimmy want to talk trash would've ,should've, could've now, Chris stop talking and spitting!!!!!!!!!!!!!!",
+                    "@jessespector bird hats &gt; every other hat"
+                ]
+            }
+        },
+        "iteration_2": {
+            "2_shots": {
+                "positive_examples": [
+                    "@YungRajee Shit ill pay the premium to get away from these anything ass hoes"
+                ],
+                "negative_examples": [
+                    "walking dead gonna be so trash this season"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "RT @xDSmooth: The way this niggah just flinched at this movie was #priceless @1BookieG",
+                    "they shot another monkey lmaooooooooooo",
+                    "RT @julia_rodd: When kennies angry he talks like a ghetto black man and I really don't even think he notices HAHAHAHAHAHAHA I'm laughing @ &#8230;"
+                ],
+                "negative_examples": [
+                    "RT @PattyChocMilk: #teabagger math http://t.co/lOiZi6fM6U",
+                    "RT @LauraRosenCohen: #AskDrMann Is having no amici briefs filed on your behalf kind of like Charlie Brown never, ever getting ANY Valentin&#8230;",
+                    "RT @goddesslaney: @lajouetreine if you give that statement any thought at all you will realize it makes no sense. At all. Please, think abo&#8230;"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "@RileyCooper_14 so your a \"nigger\" fighter huh",
+                    "Sitting at the bar at work watching Walking Dead and all these fucking wetbacks decide to come in &amp; turn on their spic music. Jesus Christ",
+                    "&#128514;&#128514;&#128514; i just said that RT @BoyThats_ARYAH: My TL gotta chill with this pretty face challenge foolishness, y'all hoes agg",
+                    "@alyssawiens faggot",
+                    "@Joey_D26 sweet comeback u fuckin herb I dnt watch soccer but id still wax your bitch ass in it go swallow the red soxs kids ur from NYC fag"
+                ],
+                "negative_examples": [
+                    "@JjLoveUp tranny",
+                    "This Charlie Murder game is pretty dope #Xbla",
+                    "Jihadi John beheader of journalist Foley and Sotloff Was 'Arab Charity Collector' http://t.co/RL7F2qV56F via @BreitbartNews",
+                    "&#8220;@__Black_Jesus: &#8220;@lil_aerii: Happy new year &#127882;&#127881;&#127881;&#127881;&#127881;&#127881;&#127881;&#127882;&#127882;&#8221; check yo clock Hun we got another hour lol..&#8221;they just did the lil count down thing",
+                    "@idkconstancio I'm trash"
+                ]
+            }
+        }
+    },
+    "evalita": {
+        "iteration_0": {
+            "2_shots": {
+                "positive_examples": [
+                    "@AnnCoulter @DonaldJTrumpJr If anyone would know about hysterical women, it would be you btch"
+                ],
+                "negative_examples": [
+                    "Fuck tittie Tuesday, let's make twiddling twat Tuesday a thing"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "shut the fuck up bitch dont speak on my country or my people",
+                    "#ThursdayThoughts Booker & Kamala competing for Most Hysterical Woman at the Kavanaugh hearings.Spartacus.",
+                    "Girls Don't Poop... They just cry!"
+                ],
+                "negative_examples": [
+                    "I either laugh or turn into a complete psychopath when I'm mad, either way, no one is safe",
+                    "What the fuck Richard you can just shove my milkey seeds into your hole @zeudles",
+                    "How to kidnap me https://t.co/Q46Xocec8k"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "@Nichiey_Okeyo @JOdhiambos okeyo, go rape your whore of a mother!",
+                    "Why do girls follow me? All I do is make fun of them for how dumb they are #WomenSuck",
+                    "@KatiePrice How are they trying to destroy you? You missed your 4 kids first day at school to skank about topless with yet another man. Disgraceful. The kids are better off with their dads where theyre happy, safe & have a stable, loving home...",
+                    "starbucks cashier: ur name me: johanis on the cup:hoehines me:yes bitch yes im a hoe fmu",
+                    "\ud83e\udd24I need a bitch thats gon pay all my bills I don\u2019t like broke women \ud83e\udd22\ud83d\udeae\ud83d\ude37\ud83d\udeae\ud83e\udd27"
+                ],
+                "negative_examples": [
+                    "@realDonaldTrump Nike will become a even better hit, now your daughter on the other hand.... bitch, stfu. Nike has grabbed you by your pussy.",
+                    "@asianwasted we're not just objects that entertain you, we have feelings too! #YesAllMen",
+                    "i mean, yes, women bare the collective shitload of constantly being objectified, & not all men are sexist creepers (all of the time)",
+                    "@fuck________off my age but wishes she was younger",
+                    "New to Twitter-- any men on here know what the process is to get #verified?"
+                ]
+            }
+        },
+        "iteration_1": {
+            "2_shots": {
+                "positive_examples": [
+                    "If you feel like we have to talk everyday for us to be friends then bitch bye \u270c\ud83c\udffd"
+                ],
+                "negative_examples": [
+                    "Hysterical woman like @CoryBooker"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "that bitch wanna act funny bitch ima act hysterical",
+                    "You a pussy bitch watch when I catch you I\u2019m beat tf outta you",
+                    "@Slutty_Elf @RiotQuickshot You shut your whore mouth"
+                ],
+                "negative_examples": [
+                    "Her- send me a dick pic Me-*sends dick pic* Her- that's photoshopped Me- https://t.co/AWKO4mEG5X",
+                    "Oh my God I had no idea Destiny was the same girl from the People\u2019s Couch. I thought she was hysterical on that. #shahs",
+                    "When someone brings a screaming kid into a restaurant and acts like nothing is happening https://t.co/EyMnI2ETTf"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "Women are beautiful to me when they are silent. Why do they have to speak up and ruin things??!",
+                    "you ever just see a random woman on the street and want to choke slam her to the ground, pour gasoline in her cunt and light her on fire",
+                    "@sza got these hoes thinking sharing a nigga or being a side bitch is cool \ud83e\udd26\ud83c\udffd\u200d\u2640\ufe0f",
+                    "Let me show and prove it what these hoes ain\u2019t doing, let a real bitch do it \ud83d\ude1b",
+                    "Nicki album bomb af I swear yall niggas really just dont like women sound like hatin bitch go put on a skirt and stfu"
+                ],
+                "negative_examples": [
+                    "How can you slag someone off so much and then be best friends the next minute \ud83d\ude02\ud83d\ude02\ud83d\ude02",
+                    "A woman who accused US rapper Nelly of rape has asked the police to stop their investigation",
+                    "@JeriLRyan @linseygodfrey Lies! Women who came out of the gutter all of a sudden cry rape or abuse but traded it fo\u2026 https://t.co/t5For8SCow",
+                    "@FockerRN529 It\u2019s hysterical him watching that woman and eating chicken",
+                    "Friend- you really need to chill on the drinking and sleeping around Me- https://t.co/SfPfJxhYzd"
+                ]
+            }
+        },
+        "iteration_2": {
+            "2_shots": {
+                "positive_examples": [
+                    "@Steffersxoxo weird as fuck cuz women suck. #YouSuck"
+                ],
+                "negative_examples": [
+                    "5 Tunisians try to rape Lampedusa woman (3) - Manages to send them packing https://t.co/uLSaatIVAL"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@Onlyyaelin_ @_celesstee So you just want money skank",
+                    "@whitneyrawlins we have the same bday... You should let me fuck your brains out and treat you like a cum dumpster on that day... #Bdaygoals",
+                    "Bitches are always sayin 'it's the little things' until you have a -a little bank account -a little drinking problem -or a little dick"
+                ],
+                "negative_examples": [
+                    "@KeithOlbermann You are a hysterical moron. https://t.co/37l7TuTdwh",
+                    "@Yungretweet Oh i get it, believe me. Fucking pussy ass bitch cunt hoe",
+                    "Not all men cheat. Not all women cheat. It\u2019s equal now move tf and get over it \ud83d\ude44"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "how u gonna talk about how men r trash and rape culture but u out here laughing abt a girl u hated in high school getting raped bitch fuck u",
+                    "My grandpa once told me 'The only bitch that matters is my DOG' and I've stood by that my whole life. #BitchesAreDogs #DogBitch #Ihatewome",
+                    "biiiitch lil biddy whores doofus bitch im eat my ass",
+                    "@spoillbrat Ahhh bitch just the other day you said ' I been having a crush on him since forever' dumb ass hoe give it up he don't want you",
+                    "@charlyne_yi no its for women who are being a fucking bitch"
+                ],
+                "negative_examples": [
+                    "@realDonaldTrump Shut the fuck up you pussy grabbing pervert.How's the divorce?It's Mueller Time!",
+                    "Someone asks you to catch a rare fish with like two days left in the season and it's like dude can you not be such a dick",
+                    "yet when men sexually abuse women it\u2019s not ALL men https://t.co/mXZNxq6oSi",
+                    "Well, I guess Booker won the \"most hysterical woman\" award today!! !!!",
+                    "@keef1985_ @Vaughan1878 idk buddy, I'm not a meme historian"
+                ]
+            }
+        }
+    },
+    "founta_hateful_57k": {
+        "iteration_0": {
+            "2_shots": {
+                "positive_examples": [
+                    "I don't know what's worse: the Yooka-Laylee rap or the people in the comment section whining about JonTron. It's so goddamn pathetic."
+                ],
+                "negative_examples": [
+                    "PRANK BATTLE Who won??? https://t.co/PBr6jheqz9 #DolanTwinsNewVideo @GraysonDolan @EthanDolan X12"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@KillDaSmoke @USEmbassyAbuja it is not becus of sentiment, it is because there is no basis for unity. Nig is just a geographical expression",
+                    "RT @3lectric5heep: Two IDIOTS Team-Up to FIGHT \u201cRacism\u201d and Make it WORSE https://t.co/jZoOIrKibg @3lectric5heep",
+                    "RT @xoxo_deshonda: If I have a daughter she can't fuck with fuck niggas!!!!"
+                ],
+                "negative_examples": [
+                    "Antibiotics Market Is Anticipated To Grow Owing To Rising Prevalence Of Infectious Diseases Till 2024: Grand View\u2026 https://t.co/W3qcuw7QYD",
+                    "--she had a doctor's note that allowed her not to take part in class... pretty sure it wasn't legit too... I SHOULD'VE MAULED HER!!!!!",
+                    "This Chuck Gerson piece greets me each day as I come into the office. Reminds me of the sunrise and the promise of\u2026 https://t.co/QCmyCLnK0J"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "My opinion you reply to so you do care. It's black women like you that make black women look stupid https://t.co/byHaDpz5qc",
+                    "RT @jacob4kids: Trump University is a example of the lack of integrity the idiot in the Whitehouse has. A sitting president has to settle a\u2026",
+                    "White people have been fighting each-other for millennia +now we think importing millions of 3rd world migrants isn't going to cause issues.",
+                    "@crehage @IvankaTrump @realDonaldTrump Well do you want to start World War 3 you idiot",
+                    "@fourwinds44 @NeillVicki so disgusting. how to stop him? looks like lots of activity to stop him. this poor poor b\u2026 https://t.co/ZGm2Wx0XYS"
+                ],
+                "negative_examples": [
+                    "@deeeebag \u2764I know....I will never be the same...once I gave my heart away I found that its gone forever....save those pieces that are left \u2764",
+                    "\u2018Breaking Bad\u2019 Fans Will Now Be Able To Eat At Los Pollos Hermanos Restaurants In\u2026 https://t.co/wSg1NrnREn | #HipHop",
+                    "@Harry_Styles you give the sun a reason to shine, you're so beautiful, loving, generous and kind. I love you! Mind following me? \u2661 132.458",
+                    "@brianna_hughes_ @Nick It's always the ones who talk the most smack. My ex was the same way but is currently engage\u2026 https://t.co/uskGN6nK1n",
+                    "Found a Transponder Snail! Take a look at the Fishmen behind Arlong Park! https://t.co/E18OXX7BZg #TreCru https://t.co/wxAvDChj9k"
+                ]
+            }
+        },
+        "iteration_1": {
+            "2_shots": {
+                "positive_examples": [
+                    "RT @KyaUkhaadLega: Anyone would be afraid ! What if you press a button on your jerseys if you get pissed off after losing to India ? https:\u2026"
+                ],
+                "negative_examples": [
+                    "I'm still crying and this was over a month ago @AdelaineMorin (tysm @greedymsfts for taking a video lololol) https://t.co/13ofRobuPf"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "Father: \"You've been around the block a few times son.\" Me: \"You do realise that you just effectively called me a slut right?\"",
+                    "@MixMasterMartin @EngellandsEye @Jonnyhops13 It's the Petr forsberg. The hittee becomes the hitter ha.",
+                    "@kenan04bazit yeah, dont speak english or all these other lingo's of country's that Turks been earning money in. Don't \"Denk\" #turkidiots."
+                ],
+                "negative_examples": [
+                    "Hogan signs bill to help close Baltimore schools budget gap https://t.co/c4dVGYm3Aa https://t.co/YE9zSWnM8F",
+                    "Anthony Taylor admits Swansea penalty incident was \"indefensible\" - but refuses to blame Marbella stag do\u2026 https://t.co/RtLgxmYURM",
+                    "Super cute kids shooting some netty hoops, as we count down 1 year till the Comm Games Ten News Melbourne https://t.co/2Smk6ZRLqD"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "The Nuclear Options: Obama Silent over Trump Tower Wiretaps https://t.co/5NSkBKBCvT #Europe https://t.co/Sc1jQtk6RY",
+                    "If that's his pointy little head photo shopped in, then the glasses mean he is genetically inferior https://t.co/lTsOuxrcur",
+                    "&#128196; #WinterEvent2017 On the attraction of two perfectly conducting plat on-the-attraction-of-two-perfectly-conducting-plates.pdf",
+                    "I wanna meet alex!!! &#128557;&#128557;&#128557;&#128557; but im going somewhere so im fucked",
+                    "\"Two things that I just can't respect.... A fuck nigga and a lyin ass bitch\" @YoungDolph DOLPHHHHH!!!"
+                ],
+                "negative_examples": [
+                    "@calamityjamie Thank you so much! It's a little inside joke from one of my favorite 80s film, haha, so I couldn't resist.",
+                    "Really sorry for not replying to tweets; I've been mad busy finishing stuff and I'm about to hit the road! I'll catch up soon, though! \u2665",
+                    "@TheManInIron stitches in your head and you woke up not remembering the accident but when I got ready to take you home you didn't remember--",
+                    "Enter and share for your chance to win 3 brand new @GE_Appliances! #YouPick3 https://t.co/bELM6f4MLX https://t.co/fgo3sK0wCy",
+                    "The latest ACTIVADOS! https://t.co/MgbVZc3nSR Thanks to @DiosestaconDany @dprondonf @GabyDeVuelta #opini\u00f3n #noticia"
+                ]
+            }
+        },
+        "iteration_2": {
+            "2_shots": {
+                "positive_examples": [
+                    "They must be getting closer and closer to the jackbooted jerks. Day 71: Made you Flynn-ch https://t.co/mVcTrjj4fl https://t.co/v1GGMpbKUL"
+                ],
+                "negative_examples": [
+                    "When your boss tells u don't believe anything a specific person says &amp; u Google him &amp; he has stolen 23mil from ppl...."
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "HUGE \u00a330 #FreeBet Offer (1) Join #WilliamHill (2) Bet \u00a310 (3) Use Code C30 (4) Get \u00a330 FREE Claim &gt;\u2026 https://t.co/AvpCeiBLFh",
+                    "@ABCPolitics What a bunch of fucking idiots. The strike was not on syria you idiots. It was a message for Assad. Be\u2026 https://t.co/hpo010Uw4y",
+                    "Finished watching #ScarletHeartRyeo such a #bittersweet ending. Loved it but also hate it because they didn't end up together &#128557;why??!!"
+                ],
+                "negative_examples": [
+                    "I liked a @YouTube video from @epicpunches https://t.co/uu7HICwuY6 Superman: Doomsday (2007) [[ Superman VS Doomsday PART1 ]] -",
+                    "Stop by and say hello to Jan Snoeck\u2019s extraordinary 2 meters high golden statue. https://t.co/PYEPCZFjGI https://t.co/SbJ0IvkWtP",
+                    "The Immense Value of Written Content for Your Business https://t.co/EIjTcyB1sv #contentmarketing #writing #content"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "Man Records Girl While Banging Her As She Talks To Her Boyfriend On Her Phone https://t.co/k34dW51HNs",
+                    "RT @LarnaJadex: hate them selfish pricks who won't let you copy their homework.",
+                    "RT @riazbapoo: Gwede Mantashe is just South Africa's version of Sean Spicer ... they're both idiots who have defend and answer for\u2026",
+                    "Classic case of corruption involved road agency ZINARA whch bought 40 grdrs 4 $8mln.No tender, executives received \"fat\" termination packs",
+                    "@GwerfylEdwards i hate it too but cant sit down unless its done! Its not so bad now 2 kids have moved out &#128514; xx"
+                ],
+                "negative_examples": [
+                    "there was a video where a student led the band for stars and stripes but it was he brass class but the picc started playing fr another room!",
+                    "You are determined to do everything you can to accomplish your... More for Cancer https://t.co/OxTE2RkFXz",
+                    "@0dettte What I love about your polling methods is your unbiased, hands off approach. (the right answer isn't listed)",
+                    "@CrispOperations For myself I am no more to caring than crops, more to stand and what the sufferings of a committee. 97d4f6aa",
+                    "the irls who didn't help me with hw are all \"you didn't get it?\" if i break will my ults comfort me https://t.co/Hej2ZmJDzp"
+                ]
+            }
+        }
+    },
+    "hateval-immigrant": {
+        "iteration_0": {
+            "2_shots": {
+                "positive_examples": [
+                    "Calais Jungle refugees get a grip France they are visitors ,they have no rights or in a position to demand ,Europe needs to get a grip"
+                ],
+                "negative_examples": [
+                    "I keep reading articles of detained refugee, immigrant children being raped and sexually abused by workers and it\u2019s heart breaking. It makes me sick to my stomach. Look at who the real criminals are, the ones they are handing them off to..."
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "Wonder how much US $$$ from unfair trade is used for this BS !!! The German Government Pays for 3 Week Vacation for Refugees to Go Home | Armstrong Economics https://t.co/TkbmXXtRoR",
+                    "@Daily_Express Migrants get here then they phone for the next load to come mobile phones cost not such a thing as a poor migrant with a phon",
+                    "@Thomasjwhitmore @realDonaldTrump No, millions of Americans have lost jobs to illegal immigrants for 3 reasons...they work for less, often for cash and are more reliable. Sought out by employers. Asylum seekers are trying to excape violence, want to assim"
+                ],
+                "negative_examples": [
+                    "https://t.co/yXUh4pLPQP",
+                    "Facebook's new political advertising policy denounced by immigrant, civil rights groups - https://t.co/v4X1rqRCdN #advertising #reviews https://t.co/krUioEnOEy",
+                    "Despite Pakistan was created on religious basis, a large number of Indian Muslims showed their reluctance for Pakistan and stayed back to thenown home in India. The Muslim refugees from Northern India who... https://t.co/oS1HP9cNH5"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "Merkel support falls to all-time low as ruling bloc damaged by migrant row https://t.co/SBrWUxthbr via @telegraphnews",
+                    "@SenateDems @SenSchumer #Democrats  Refuse to Secure the Border and Protect U.S Citizens from the Ravages of Illegal Immigrants !  #VoteDemsOut !  #WakeUpAmerica #WednesdayMotivation  #Trump #MAGA #RedNationRising   https://t.co/bVgwmVUgjz",
+                    "Even leftist volunteers given up on violent #Paris migrants lolhttps://t.co/IfkNt5LJhP",
+                    "After yesterday black refugees stop police, today at 5.30 in Germany the refugeehome was entered and many blacks went to jail. https://t.co/8YdhlJJ2lH",
+                    "Crimes by illegal immigrants are all too common, particularly in states near America\u2019s southern border, but despite the growing number of crimes by undocumented aliens, Democrats in Congress seem unwilling to budge on immigration reform.https://t.co/aKMQvmXLV6 @jjraegirl"
+                ],
+                "negative_examples": [
+                    "#ICE imprisoning #immigrant children was a business plan, to make #GEOGroup income. GEO group is a For Profit Prison system company that is a publically held company. It lists under $GEO  Is that legal?  cc @Crewcrew @Maddow @ProPublica @Frontline @MSNBC   https://t.co/qrUxkY3WHz",
+                    "Edwin Jackson, Indianapolis Colts linebacker, was killed by an illegal alien, police say https://t.co/tpkbtO8nHc#AgainstAllEnemies#PreventableDeath #BuildTheWall #StopTheInvasion",
+                    "Mexico troops find 150 Central Americans in back of truck https://t.co/HK36TvFzUxMexico is finding illegal immigrants",
+                    "1,500 migrants have died in Mediterranean in 2018, Italy deadliest route: U.N. https://t.co/jfBxqKkkzi",
+                    ".@senatorburr: Confirm Kavanaugh! #KavanaughForSCOTUS #2A #NRA"
+                ]
+            }
+        },
+        "iteration_1": {
+            "2_shots": {
+                "positive_examples": [
+                    "#BuildThatWall #Meritbased get the ILLEGAL situation under control. ILLEGAL is ILLEGAL. #MAGA #AMERICAFIRST #BacktheBlue #ICE #Respect"
+                ],
+                "negative_examples": [
+                    "Proposed relaxation of immigration rules for non-EU skilled workers | Migration Watch UK https://t.co/kRGRkNaXej"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@DailyMirror  Parliament who trusts who any more more lies in putting up Petrol Prices and leaving EU will pay for the NHS lies Tax rises whose Health are we paying for really foreign staff interpreters support workers ,u managed to change immigration pol",
+                    "Why is it so hard to understand. They are not immigrants. Immigrants come here legally and follow the rules and laws. Illegals are just that. Illegal = criminal. They are not law abiding.  https://t.co/8qRyKJ4ugY",
+                    "@realDonaldTrump all of these people from Venezuela are on their way to America this is what Socialist Democrats look like and Socialist Democrats and liberals will say welcome to America and Canada like loser @JustinTrudeau #BuildThatWall soon #RedNation"
+                ],
+                "negative_examples": [
+                    "Please help me get this message to Congress by sharing it#EnoughIsEnough#WakeUpAmericaI am a proud LEGAL Hispanic immigrant! Loving our USA doesn't make us \"white supremacists\". It means WE LOVE EVERY AMERICAN!#DontTakeRaceBaitersBait#Walkaway#DrainTheSwamp#RedNationRising https://t.co/wXh78xTpXO",
+                    "We want the world to give us justice and make it possible for us to go back.The fact that we had to flee, we want justice for that. We ask for justice from the leaders of the entire world.https://t.co/3jv0hnp8Md",
+                    "EU leaders meet in Brussels to discuss migration challenge https://t.co/RQpQpKF3Fz"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "https://t.co/6mQ1QUfRDwSweden election\u00f0\u0178\u2018\u2030Concerns over mass immigration/multicult redefining landscape.When lunatics at \u201cLive Brno\u201d in #Czechia start yapping about solidarity migrants from Italy one must remind these naive fruits of consequences in\u00f0\u0178\u2021\u00b8\u00f0\u0178\u2021\u00aa\u00f0\u0178\u2021\u00ab\u00f0\u0178\u2021\u00b7\u00f0\u0178\u2021\u00a7\u00f0\u0178\u2021\u00aa &amp; elsewhere WestEU https://t.co/KGaB6JQlSb",
+                    "@AZjbc @SarahPalinUSA @PressSec @POTUS @DonaldJTrumpJr @TheFive Looks like it could be Hussein's cousin handling the $$$.#BuyFromInAndOut #InternetBillOfRights #DarkLeft #WalkAway #ReinstateRobynGritz #JimJordan4Speaker #2A #DefundPP #ChainDeportation #Bu",
+                    "Drunken refugees - is that sad or a nature law. No refugee have to leave his country to have a better life. This means he can also get dead on his journey for hope. And so its better to stay home, than to dream. https://t.co/HZyiAfRp9M",
+                    "FYI @SenMajLdr AND @SpeakerRyan The ONLY REASON you 2 have a job is #WeThePeople VOTED for @realDonaldTrump to #BuildThatWall!! IF you 2 are so incompetent you cannot complete a mandate for the President of YOUR OWN PARTY, YOU 2 need to #WalkAway!",
+                    "These people are not your friends. They are true .@realDonaldTrump supporters who hate people color, Hispanics, immigrants and women. https://t.co/Pho8tZOk3P"
+                ],
+                "negative_examples": [
+                    "Australia is younger and better off: RBA governor defends immigration rate https://t.co/ixf5lFsVeB via @canberratimes",
+                    "@marnard808 @a_dub_alva @emrazz @Prof_Tweeper @TomiLahren So you cant stand your own kind either you gotta breed with something else.",
+                    "Canada will begin taking in American refugees of all nationalities and allowing them to seek refuge in Canada, or go back to their home nation if their home nation is hosting a refugee/repatriation program. Once stability is restored to America, Canada will return any refugees.",
+                    "* Libya rejects EU plans for migrant centers on its territory. https://t.co/hccQmsQ9Vl #v4 #visegrad https://t.co/Sf0JmCn4z1",
+                    "1/ I'm reminded of an interaction that fuels me. Soon after returning to finish my undergrad, an uncle came to visit. He's a Greek immigrant..very Greek. He visited my parents' restaurant, where I was working."
+                ]
+            }
+        },
+        "iteration_2": {
+            "2_shots": {
+                "positive_examples": [
+                    "Spain: 'Spain is becoming the Third World,' American tourist almost killed by migrants speaks up #StopTheInvasion  https://t.co/vxPDiGLv9i"
+                ],
+                "negative_examples": [
+                    "Italian bishops champion \u2018\u02dcvoiceless\u2019 migrants https://t.co/AciJ3LxOBq https://t.co/r8f53zYEBu"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "Stricter immigration laws and build that wall! #KAG #MAGA #ProudAmerican #ProudConservative #TruthIsPower #SearchForTruth #Vote #Deplorable #DrainThatSwamp #WWG1WWGA #BuildThatWall",
+                    "Polygamy&amp;explosive Muslim population r biggest evils for violent mindset.West,India,China,Russia must change their immigration laws...",
+                    "@ramzpaul Amen:  See 'Canada in Decay' by Ricardo Duchesne for the similar reality of Canada.We are not nations of immigrants."
+                ],
+                "negative_examples": [
+                    "Wrong! The heart of the problem is: 1. nationalism, which is the right of every state or population 2. refugees are only a minority of all 3. economic migrants not welcome and have no rights (also according to international law) 4. all refugees or migrants are heading south EU https://t.co/w5achTHH7O",
+                    "We need to be shouting NO!! very loudly if this happens.  The refugee situation is much more important than the... https://t.co/dYIrnJ6o1p",
+                    "Hope this group and any members are placed on a security watch list and not the immigration list.... CBC News https://t.co/2yLMPLdRp5"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    ".\u2066@united\u2069 how about donating flights to deport the Invaders back to their homeland.  #StopTheInvasion #DeportThemAll  https://t.co/Ry2dah2KeJ",
+                    "Great article by @giacomo_zando \u201cMigrants are our sole currency: only when we find a new one we will stop transporting them.\u201d https://t.co/t7Rbj3jJGG via @open_migration",
+                    "Students in Arunachal threaten to launch 'Operation Clean Drive' from August 17 if illegal migrants do not leave the state before that. #AAPSU #ArunachalPradesh #NRCPolitics Full Report- https://t.co/Uj8eZG0o3b https://t.co/XNLGkI1KVe",
+                    "Complete disgust. #Democrats this is on you. #IllegalAliens are invaders, race regardless #deathpenalty",
+                    "\u2018\u02dcWe will decide who enters our countries!' Hungary and Poland REJECT EU refugee quotas https://t.co/njgtVZKVe8"
+                ],
+                "negative_examples": [
+                    "@wolfblitzer obviously we have a liar on denial full of all kind of excuses a cruel person,with the mess of immigrant lost without their parents show a men with no feeling for humans,congress is shock with all his actions,his own party against him.",
+                    "I am not a refugee but thank you anyways for supporting my thread https://t.co/oUNI8m0LF7",
+                    "@DailyMirror The longer picture of migration from a 75M Turkey and add Bosnia will bring the end of our way of life as we know it alreadybad",
+                    "Immigrant detainees contribute to \u2018chaos\u2019 at overcrowded, understaffed Victorville prison, union says.  Part one of a two-part series by me and @TheChalkOutline: https://t.co/8WFTkFUcEu https://t.co/3nvq8GWJoa",
+                    "Anti-Immigrant 'Sheriff Joe' Joins Sacha Baron Cohen for an Interview. The Topics Get Sexual - Fast https://t.co/pzAe8UOSbI"
+                ]
+            }
+        }
+    },
+    "hateval-women": {
+        "iteration_0": {
+            "2_shots": {
+                "positive_examples": [
+                    "@keelaiii HaahHahanahA this girl stilllllll going\ud83d\ude02 'loner ass no real friends having ass bitch' YASSSSSSSSSSS\ud83d\udc81\ud83c\udffd\ud83d\ude02\ud83d\udcb0"
+                ],
+                "negative_examples": [
+                    "@hotmessminushot touch\u00e9! #MaleDominance"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@johnlundin Some gold-digging skank has stupid opinions.",
+                    "@piperalex_ Unless cow tipping is classed as physical assault you should shut your fucking whore mouth, i hope you never show your face outside of whatever hole you went to hide in because frankly i would love to drop kick you off a fucking balcony xoxoxo",
+                    "I'm a human being not a toy so stop fucking playing with me #WomenSuck"
+                ],
+                "negative_examples": [
+                    "RT @ThoughtCatalog: This Is How Men Should Support Feminists (As Told By A Young Conservative Libertarian Male) http://t.co/VBUB4dzc0o",
+                    "People don't scare me, my inability to be scared by people sometimes does tho",
+                    "I put the AGE in savage cause I'm old AF"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "bitch if jongin wants to give sehun a forehead kiss he will deadass tiptoe and kiss him you think a little height difference will stop him?",
+                    "@chargenewtwit @NotZelta you gonna shut the fuck up pussy?",
+                    "Let\u2019s me honest, Jews offer things and the white women are just skanks. Muslims gang rape and beat white women. https://t.co/sKz3V5wDrm",
+                    "RT @JWMofficial: You're wearing yoga pants to show off your ass. Don't give me this bull shit 'they're comfy!' we all know the truth ladies #ASS #ASS #ASS",
+                    "@BoardGameBrawl These people are hysterical. It's like a commercial for why men should never marry. These women are totally nuts."
+                ],
+                "negative_examples": [
+                    "World - Woman Who Accused Nelly of Rape Wants to Drop Case, Will Not Te >> https://t.co/Bgc1oiLB3X https://t.co/aFQmU6TmqX",
+                    "everyone that ever said anything bad about mark can honestly choke my mf boy just rapped AND sang in his OWN SELF PRODUCED SONG and you know what? it was FUCKING AMAZING nothing but respect for my president",
+                    "@thehill @SenJohnMcCain please retire, that tumor turned you into a hysterical libtard. We are sick of you. Go cras\u2026 https://t.co/2GOps5BkjF",
+                    "How about instead of candy you get a free STD check? * cough * * skank * * cough *",
+                    "When you're acting like you have your life together but you really have no clue what the fuck is going on https://t.co/clRmdy8eI4"
+                ]
+            }
+        },
+        "iteration_1": {
+            "2_shots": {
+                "positive_examples": [
+                    "@jalenramsey Lmfao shut the fuck up with your Brentwood Academy havin ass. Yall have one of the worst QBs in the league as far as TD/INT ratio go but you hate on every other quarterback.... Sit your pussy ass down and get swept by the Titans again."
+                ],
+                "negative_examples": [
+                    "psa: women were never 'sacred' and unless you miss the Madonna -Whore binary, it's good that we've let go of that stupid frame"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "Females-*you need to respect women more and stop calling us hoes*Lil pump-*you such a fucking hoe, I love it*Females- *that new Kanye and lil pump song is my shit*",
+                    "@SovereignCortez U DAM STUPID ASS HOLE THEY DON'T KILL ANIMALS IT FOR WOMEN WITH BREAST CANCER U DAM BITCH!!!!",
+                    "my dad just drove past the chicago theater. long time no see you dirty slut"
+                ],
+                "negative_examples": [
+                    "Ophelia the slut hurricane hits today and I can guarantee that bitch will destroy my internet ready for front page \ud83d\ude12\ud83d\ude21",
+                    "Remind me what I pay NI for. And what the fuck have you done with our money cunt? https://t.co/OGyzE5SxrO",
+                    "@Greekgodx u cunt fuker of a dog whore of a grandma"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "bitch bitch dont be mad, you better be glad kus this the best piece of pussy that ya man ever had \ud83e\udd38\ud83c\udffd\u200d\u2642\ufe0f https://t.co/JJIRxyMrqk",
+                    "You a childish ass bitch if u don't suck dick and u a gay ass nigga if u don't eat pussy \ud83d\udcaf\ud83e\udd23 Idc let's argue",
+                    "@randiiiadams But a women cheats and parties? She a hoe leave her ass. The double standard....amazing",
+                    "@TayrnG @WhiteHouse You are a stupid idiot. F U. NASTY TRASY SKANK",
+                    "Teaching a woman to drive is like teaching a rock to swim. #WomenSuck"
+                ],
+                "negative_examples": [
+                    "I've never liked @JKCorden and he didn't endear himself with the Sean Spicer bromance and Stupid Weistein jokes. Bit of a cunt",
+                    "@Loftyhowell \u270b\ud83c\udffc hey that's a fair fucking trade \ud83c\udf1a",
+                    "@womensmarch \"Hysterical Women\" is right out of the Con play book.. they believe only men can make the most fucked up decisions of all time, not need for women.",
+                    "Y\u2019all, Bush Sr. literally made jokes about copping a feel. That isn\u2019t a man \u201caccidentally\u201d brushing up and women being hysterical.",
+                    "When you find your ex on tinder https://t.co/35UTO8JHVS"
+                ]
+            }
+        },
+        "iteration_2": {
+            "2_shots": {
+                "positive_examples": [
+                    "Pro Tip- Fuck bitches in their 30's... No one wants them so they're easy and they're also experienced"
+                ],
+                "negative_examples": [
+                    "oh my god yall non fans are so annoying let universes and pentagon grieve let us take all this in first just let us fucking be and leave us the fuck alone we dont need your fucking opinion on the matter im so fucking done with yall for fucks sake just shut the fuck up"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@ABC Hey, immigrant skank ass HO, look, there's an older, fatter less hair dude, AND HE HAS 5X THE THAT YOUR PATHETIC IMMATURE HUBBIE HAS !!! GO ON, GIT !!",
+                    "99% of women in the olympics look like beefy dikes",
+                    "Too bad my stupid loyal bitch ass dropped all my hoes that smoked me out for an ain't shit boy"
+                ],
+                "negative_examples": [
+                    "Muslim Accused of Rape Said \u2018Allah\u2019s Going to Get You\u2019: A Muslim man accused of raping a woman also allegedly told\u2026\u2026 https://t.co/DHxDEs6VZk",
+                    "@steelebabe10 is a whore for any medical show and I'm a slut for a crime drama. Two sides of the same coin.",
+                    "Deleted again. Working to get it back again https://t.co/DfJKXgfvcf"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "Wow they tried to give me a FEMALE DOCTOR TODAY. I didn't even know those EXISTEd...",
+                    "Come on everyone spread the word! Let's get WomenSuckk big! #retweetthisone",
+                    "@Iovesyuno stupid bitch i hate you",
+                    "@Bubbles8301 @LPIsaacGuest She a nasty skank Hoe who would Fuck her wolf pussy anyway ?",
+                    "My grandma called her hoe she said bitch you a hoe yourself going with a married man and go to church every week LMFAOOOOOOOOOOOOOOOOOOOOOOO"
+                ],
+                "negative_examples": [
+                    "Looooooooool I can\u2019t believe \u2018BEN WOTTS\u2019 aka dick head fuck boy send me a pic of his hairy ass hole n asked me to peg him.. weird cunt \ud83e\udd23\ud83e\udd23\ud83e\udd23",
+                    "And bitch i was tweeting a song i got no times being sad for smeone i mean im a busy women you see.",
+                    "@fuertecorazon The era when a woman was either Mother Mary or a whore is over. Women are plain and simply human beings.",
+                    "@cpyne you are a KUNT https://t.co/S9WtCv7nA1",
+                    "When you're trying to enjoy a nice date but your boyfriend won't stop texting you and interrupting it https://t.co/g2ZGvzDOed"
+                ]
+            }
+        }
+    },
+    "ibereval": {
+        "iteration_0": {
+            "2_shots": {
+                "positive_examples": [
+                    "Get over yourselves ladies... You're wrong.... all the time!"
+                ],
+                "negative_examples": [
+                    "@autumnrainwish Checklist of #iamgandhi 1. Want to see Women in Short Dresses 2. She is \u091f\u0902\u091a \u092e\u093e\u0932 3. Being abusive to mothers - Son of a bitch"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@Logic301 bitch you welcome",
+                    "They've made it almost impossible for Men to be dominant, in the matriarchal western society. fuckfeminism",
+                    "@dualipuhs Leave my ship alone you whore https://t.co/zJB6R2Pbzv"
+                ],
+                "negative_examples": [
+                    "When your sugar daddy spoils you like the princess you are https://t.co/S8sFLCPDfA",
+                    "When you wake up and your mouth is drier than the Sahara desert https://t.co/SBJppDP9Lq",
+                    "When you know how to eat her pussy right https://t.co/73MlW21Mvh"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "The Young girl raped after hanged by criminals, Please help to stop rapes and murders of women & young girls, https://t.co/zqAD0Zl9D3",
+                    "@femfreq if you count prison rape men are raped more than women.",
+                    "They call it HB. I\u2019m a hot bitch you a has been",
+                    "I kinda want to see you again just so I can punch you in the kidney. #WomenSuck",
+                    "@_amanda_lol @inlistalex Ok bitch stfu now get over it suck a dick ride a dick choke on a dick and die"
+                ],
+                "negative_examples": [
+                    "@Dreddnought are you ok Hun? There\u2019s a Mark shaped hole in my Facebook. \u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f",
+                    "@xion87 Fuck off you dickhead. The stupid cunt was trying to play the race card for something that didn't happen.",
+                    "Turning a video of yourself giving a girl a facial into a GIF is quite possibly one of the best things I've ever seen in my life",
+                    "@m_poncho Useless stupid cunt furious",
+                    "Even Victoria's Secret is promoting anal sex now https://t.co/EBhQdBGhL7"
+                ]
+            }
+        },
+        "iteration_1": {
+            "2_shots": {
+                "positive_examples": [
+                    "You don't know what you want? #IndecisiveBitches"
+                ],
+                "negative_examples": [
+                    "Gross \ud83d\ude37 I don't date https://t.co/LvIBqDzCFw"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@Simon_Snodgrass @BBCNewsnight @Cruella1 Yeah, but who was the bitch that wouldn't let her answer?",
+                    "these niggas swear im they momma bitch im a girlfriend and potential wife fuck am i supposed to do the extras for you quit being LAZY!",
+                    "What is the difference between a woman and a catfish? One is a bottom feeding scum sucker and one is a fish"
+                ],
+                "negative_examples": [
+                    "@PressSec @realDonaldTrump You stupid cunt. Trump has done nothing but sign executive orders to fuck the country and play golf. #sarahSandersCunt",
+                    "Being called a whore, slut, bitch and more for not 'playing along' with harassment #MeToo",
+                    "My whole life is one big sexual innuendo"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "Woman are good for one thing: having sons",
+                    "I hate Olive Garden waiters... Like who TF do you think you are?! The keeper of the cheese?! I will dick punch you, bitch",
+                    "I treat women like fuck toys cause that's all they are to me",
+                    "straight people flirting boy: *takes girls phone and fucking smashes it to pieces* you\u2019re stupid and a bitch girl: omg Kyle...stooop \ud83d\ude02 \ud83d\ude02",
+                    "Do men truly know if their dick is little? Women lie alot, and men be in denial, so idk"
+                ],
+                "negative_examples": [
+                    "I love my religious brothers and sisters, but @realDonaldTrump, FUCK YOU, YOU'RE NOT EVEN A REAL THEOCRAT YOU FAT USLESS BITCH.",
+                    "@MSNBC If you watch Matthews on MSNBC you are for the rape of women disgusting",
+                    "When you're out drinking all night vs when the bill comes https://t.co/pUpb5SfR7K",
+                    "When it's time to switch up your roster https://t.co/nh2HKixZYW",
+                    "Always remember, it's not whether you can or you can't, but that nobody gives a fuck either way"
+                ]
+            }
+        },
+        "iteration_2": {
+            "2_shots": {
+                "positive_examples": [
+                    "My skater pal named Aaron tends to be a dick and also 3D women are terrible. #hentai"
+                ],
+                "negative_examples": [
+                    "Shoutout to Rihanna for writing my theme song 'Sex With Me'"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "Besides the point he called me a bitch and told me to go get some dick so I could be more happy in life",
+                    "If you can't choke her with your cock just let her finger your vagina, princess",
+                    "you will never catch me out here sharing a nigga , bitch you can have that nigga \ud83e\udd17\ud83d\udcaf i ain\u2019t sharing no dick if I had a nigga bob \ud83d\udcaa\ud83c\udffe"
+                ],
+                "negative_examples": [
+                    "The girl next door sucks cock like there is no tomorrow! https://t.co/BsXS2GlmA8",
+                    "@eissolomon11 @NIVIsa4031 One upmanship between guys in private is hardly the same as women claiming rape.",
+                    "@JavaSparrowYT because your father sucks dick for a living to put food on the table, that's why i said it you stupid fucking cunt"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "If you're a man, women can't be trusted. They'll turn against you, it's in their nature..",
+                    "Love when boys think you don\u2019t know things..Hun I know every girl you\u2019ve spoke to, for how long and where the bitch lives \ud83d\udc81\ud83c\udffc\ud83d\ude46\ud83c\udffc\ud83d\ude4b\ud83c\udffc",
+                    "It blows mine when a girl tells me to her talk during sex 'how this pussy feel, talk to me' ok bitch it's a C- and I'm trynna concentrate \ud83d\ude12",
+                    "@femfreq Anita is equating gamergate to cosby and weinstein so she can equate herself to actual rape victims so she can keep playing the card",
+                    "your girlfriend a major snorter but that bitch ain't worth a quarter \ud83d\ude2c"
+                ],
+                "negative_examples": [
+                    "Just let me know though cuz women will tell you that.. give em cock once then it's 'What are we?'",
+                    "@BiteSized_Meg how drunk was this a hole and did you threaten to chop it off in theme with the month?",
+                    "You know why I like strippers? Cause they're dead inside like me",
+                    "@nowthisnews I believe Putin has a video of trump screwing a 12 yr old in Moscow hotel. Trumps resorts are whore houses for the rich. He golfs a lot.",
+                    "I love the pussy pics I get all day long on snap but when I get sent a dick pic, I block for 'inappropriate snaps' Does that make me sexist?"
+                ]
+            }
+        }
+    },
+    "waseem-racism": {
+        "iteration_0": {
+            "2_shots": {
+                "positive_examples": [
+                    "RT @Angelemichelle: RT @PhxKen: ISLAM: CONTRIBUTING NOT ONE DAMN THING TO HUMANITY FOR 1400 YEARS. http://t.co/dajGDn1Wy3 WELL EXCEPT MURDE?\ufffd_"
+                ],
+                "negative_examples": [
+                    "RT @GlobeAlone: Annie's reaction when Lloyd said Disney Land is why I hate her #mkr http://t.co/PaLZrOLDk2"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@clouds789 @arabinowitz Did you learn that logic in a madrassa?",
+                    "@Truth_Haqq Islam declared war on all mankind 1400 years ago. Now we return the favor. http://t.co/av4B4yCQzY",
+                    "@brendlewhat @MaxBlumenthal @veganforareason @dhere Christians and Hindus murdered for blasphemy by Muslim mobs. http://t.co/f3aWjksaUz"
+                ],
+                "negative_examples": [
+                    "RT @xdannock: #mkr Rob and Dave are freakin legends",
+                    "Not sure if Colin or Snape... #MKR #MKR2015 #shampooisyourfriend",
+                    "@LianaBrooks @docfreeride But then all that sweet $0 an hour cash money I make from this Twitter would be gone!"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "@nine11inreverse Another race baiting idiot. If it were about brown men\" I would hate Hinduism and Buddhism and Tao. But I only hate Islam.\"",
+                    "@adimuliapradana It is the Muslims that don't follow the Quran and Hadiths that are peaceful. Those who follow it are always violent. #Islam",
+                    "@alihadi68 @David_Cameron Who's them? I only see real beheadings in Palestine and the rest of the Muslim world.",
+                    "@yuskan0723 @essel1 You mean hapless genocidal Palestinian Islamolunatics that are determined to erase Israel from the map?",
+                    "RT @xertx3: Islam is a Worldwide mega disaster .Islam wants to drag us down to the 7th century, darkness, death and  destruction."
+                ],
+                "negative_examples": [
+                    "@merusworks THE BACON BELONGS TO ME.",
+                    "@Animecommentary everyone is awkward. :P  most people think they are most awkward than they really are. you're fine.",
+                    "Fuck me,  this show will still be running at Christmas #mkr",
+                    "Colin bringing the zings to the table #mkr",
+                    "Jesus. The one thing that Starbucks &amp; people sending me threats have in common. They can never spell my first name."
+                ]
+            }
+        },
+        "iteration_1": {
+            "2_shots": {
+                "positive_examples": [
+                    "@chrissmax He is lying. It's Islam. ISIS does nothing that the prophet Mohammed did not also do."
+                ],
+                "negative_examples": [
+                    "@halalflaws @biebervalue @greenlinerzjm Are you so stupid that you don't understand that what you are presenting is lies used to convert you"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@Love___Egypt @washingtonpost Muslims kill 50 times that many innocent non Muslims every day, so I don't care.",
+                    "@ummahwitness The Muslim pedophiles do this all the time. It's so common and accepted that it's not even news.",
+                    "Kayla Mueller tried to help the Islamists with humanitarian aid and they showed how much they appreciated it by imprisoning her.  #Islam"
+                ],
+                "negative_examples": [
+                    "RT @bow_jvr: I would vote a 10/10 to make sure Kat and Andre go home.. You know, strategic voting\" #mkr\"",
+                    "@PeerWorker @EvvyKube Nope. You keep saying that, but we both know you're lying. Show me where I called you stupid.",
+                    "Driving back to San Francisco Thursday afternoon."
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "@obsurfer84 You claim to be anti religion, yet you spend all your time lying for the benefit of Islam, the religion of hate.",
+                    "RT @4chunat1: CNN reports on the murders of homosexuals by the Islamic State, but the problem isn?\ufffd\ufffdt just ISIS, it?\ufffd\ufffds Islam http://t.co/ocd3R?\ufffd_",
+                    "@PalestineSocial @uygaraktas That's because Gaza is full of Jihadi criminals who have never done a days work in their lives.",
+                    "@Vandaliser @sajid_fairooz @IsraeliRegime There was no golden age.  Jews were regularly slaughter by Muslims in pogroms.",
+                    "We all assume that societies will progress. But #Islam forces societies to regress. Afghanistan 1950 and now. http://t.co/DnHuQ2pbuX"
+                ],
+                "negative_examples": [
+                    "How's this for sassy? From #voguecafe @MacquarieCentre But if I hear that word again I'll throw a shoe at the tv #mkr http://t.co/RJ56iwjy2x",
+                    "@mcmahoniel there's a lot of sarcasm and doublespeak in this group, especially. appropriation of terms. text filters just don't work.",
+                    "@Spacekatgal @danielpunkass hehehe. at this level\"\"",
+                    "RT @sharonpiggott: Don't understand how bad sportsmanship can be condoned by #mkr #strategicscoring",
+                    "RT @Amzf19: @__HajiHuntress #IslamicStateMedia http://t.co/jyMW2dyLov"
+                ]
+            }
+        },
+        "iteration_2": {
+            "2_shots": {
+                "positive_examples": [
+                    "RT @geoffellis186: @Juliet777777 A simple question: ask complaining Muslims why #sikhs #hindus, #Jews, #budhists etc can integrate &amp; live h?\ufffd_"
+                ],
+                "negative_examples": [
+                    "Glad I can get back to my life now the fun part of #mkr is over and the faux Masterchef part has started."
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "@greenlinerzjm Mohammed was a slave trader, caravan robber, murderer, beheader, rapist, sexist, bigot, liar and pedophile. Just like ISIS.",
+                    "@IAmThe1Teacher @stevecorrales80 @IronmanL1 Islam declared war on all humanity 1400 years ago.  And nothing has changed.",
+                    "@98Halima @johnnygjokaj @BilalIGhumman @cdnKhadija @rfrankh53 Nothing is more barbaric that the Muslims. http://t.co/oWdV64PDDT"
+                ],
+                "negative_examples": [
+                    "@ChuckPfarrer @ParaKeta Beautiful map Chuck.",
+                    "Congratulations Kat, you are now up there with the most hated people in Australia tonight. Pure bitch #MKR",
+                    "?\ufffd_?\ufffd\ufffd?\ufffd_?\ufffd\ufffd Oakland ?\ufffd_?\ufffd\ufffd?\ufffd_?\ufffd\ufffd #blacklivesmatter http://t.co/2H7F76vNTM"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "@buttercupashby @MaDaSaHaTtEr_17 Mohammed attacked the third Jewish tribe in Medina, beheaded all of it's men, sold all the rest to slavery",
+                    "RT @MaguidhirP: @Juliet777777 @GROGParty Socialists and Moslems - working together to destroy Australia.",
+                    "@westernreviews @hanna_bard For example, the Quran says leaving Islam is not accepted.  The Hadiths say kill anyone who leaves.",
+                    "RT @AmyMek: #IslamLOVESWomen Muslim files suit AGAINST law banning child marriage,OFFENDS Islam\" http://t.co/bPPiSINSS8 #IWD2015 http://t.?\ufffd_\"",
+                    "@obsurfer84 @teenage Let people look at the polls that Muslims answered and see that they come from hate. http://t.co/j2BAMNBzi4"
+                ],
+                "negative_examples": [
+                    "@darrenkopp @Bsilverstrim77 i already bought it. ;)",
+                    "This is the opportunity to prove ourselves like we didn't the first time.\" Er. Yeah. That's the spirit. #MKR\"",
+                    "Annie and Lloyd vs Vicky and Celine for their first sudden death cook off, game on! #MKR",
+                    "Kat and Andre should have been eliminated. They suck. #MKR",
+                    "Really, really, really want to go to Blizzcon, but not sure how I'm going to afford it this year.:("
+                ]
+            }
+        }
+    },
+    "waseem-sexism": {
+        "iteration_0": {
+            "2_shots": {
+                "positive_examples": [
+                    "@HumanistFury @FeministFailure It's still going strong...but I will eventually devolve into pics of hot women Pam or Carmen\"? Etc.\""
+                ],
+                "negative_examples": [
+                    "Is winning #mkr worth millions of Australians disliking you immensely due to your unpleasant conduct?"
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "RT @BigLam55: Call me sexist, but our society makes it seem as if woman are always right. Their  word carries more power In court than a ma?\ufffd_",
+                    "RT @Masterbatker: I hate her so much RT @Mini_Khoza: Masterbatker I'm not sexist, but fuck that lady. She's awful.",
+                    "@willberthelot Get a girl pregnant and find out..."
+                ],
+                "negative_examples": [
+                    "RT @UVA_fife: @YesYoureSexist FIFE will be co-sponsoring a screening of Half the Sky in April with UN Women! #feminism #UVa",
+                    "@nine11inreverse But you'll never be able to point to anything in the Tao Te Ching that encouraged their misbehavior.",
+                    "@daveowens34 @Spacekatgal @a_man_in_black @srhbutts uhhh, we don't catfight over money, sorry."
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "@plaidcat9 He was also just existing, no?",
+                    "Katie &amp; Nikki's next job will be playing people who stuff up simple tasks\" on Infomercials #MKR\"",
+                    "#MKR your meatballs were dry, things Lloyds never heard before",
+                    "RT @DakotaCoy I'm not sexist but women should be sports commentators for women's sports and men for men's",
+                    "RT @FrankWorleyPR: Ten things #feminists really don't care about http://t.co/0iDiNJgljE"
+                ],
+                "negative_examples": [
+                    "RT @DicleHaberAjans: 10 more Daesh gangs killed in Shengal http://t.co/ICluLnKFbT http://t.co/UDQljt2XMV",
+                    "DFUJIOLADFSHJIOfdy808y*(!@#$hO;IFVCGDHNDASHIGFODSA' http://t.co/USop7dCoSS",
+                    "@IAmMatticus several pairs. :P",
+                    "You confused me... in a good way,\" -is a that a compliment, Colin? Katie and Nikki think so! #mkr\"",
+                    "@RudhoeEnglish You are obviously an imposter making up lies for the  Daesh."
+                ]
+            }
+        },
+        "iteration_1": {
+            "2_shots": {
+                "positive_examples": [
+                    "RT @Mr2Wrong: @EskimoTori I'm not sexist but I do agree with gender roles. I have a dick. U don't. Gender is not the same."
+                ],
+                "negative_examples": [
+                    "@JonHelfrich oh, they do. but they use nicknames, or my real names. not mentions."
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "RT @Jason_Eyerman Girls shouldn't do drugs #NotSexist #JustTheTruth",
+                    "@CavusSeyit I read the Quran, bimbo follower, it's a violent, barbaric, murdering, sexist, stupid, genocidal pile of steaming shit.",
+                    "LMFAO @BrandonHonaker1 LMFAO who cares about the women UFC title match not sexist but seriously no one cares lol."
+                ],
+                "negative_examples": [
+                    "#NW My Kitchen Rules #MKR",
+                    "7 minute add breaks ... Bloody cheeky!  #MKR",
+                    "Those spatchcock are still alive! #MKR"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "RT @KaiTavender I'm not sexist but when a girl farts openly near you... http://t.co/YgfGfTrtrJ",
+                    "False. Equivalence. @HitlersBirthday: I'm not sexist i hate boys and girls equally.",
+                    "Now that's the weird brain-destroying sexism I'm talkin' about! @JoeGallois Call me sexist, but women are not good at high fiving each other",
+                    "Surely THIS proves that those two cunts can't cook... #mkr",
+                    "@LisaMRomano but greasy haired Colin is a judge so messy yuck is IN _\ufffd\ufffd\ufffd #mkr"
+                ],
+                "negative_examples": [
+                    "I dislike weather above 65F.",
+                    "RT @wkamaubell: This blog is a long one. But I felt I had to be very clear about this. #Racism #OnMyBirthday http://t.co/zITyDgzmmz http://?\ufffd_",
+                    "@Animecommentary only when it counts. i'm pretty snarky when it's not serious times, you know?",
+                    "@Matt_Cooke86 Nutrition is key to closing the .#Aboriginal life expectancy gap http://t.co/IHtNiRJMa9 @croakeyblog http://t.co/ktnqAD0TM3",
+                    "@FarooqSumar @TariqRamadan @cdnKhadija @saminatv @yaso49 @Quickieleaks @SamadBilloo ROFL. http://t.co/HUGHbLvdly"
+                ]
+            }
+        },
+        "iteration_2": {
+            "2_shots": {
+                "positive_examples": [
+                    "RT @ryangowan29 I'm not sexist but i hate serving women! They're so unbelievanly fussy about their drinks"
+                ],
+                "negative_examples": [
+                    "@onebrightlight yeah. the name of the game lately is staying one step ahead of gater's attempts to shut things down/abuse the system."
+                ]
+            },
+            "6_shots": {
+                "positive_examples": [
+                    "#mkr I don't know but I think it may be safe to use to C word in regards to Kat #mkr #happycampers",
+                    "RT!!!!! @countrygirl7406 Call me sexist I don't care! But NASCAR is a mans sport!!!!! #sorrynotsorry",
+                    "RT @TheMoatz: @IsaiahAurel @TheGags29 @BristolBen @MT8_9 Telling people to chop their docks off is often considered rude. Where will they p?\ufffd_"
+                ],
+                "negative_examples": [
+                    "@JimmyMcCunty @Spacekatgal oh, darn, you can't? shoot.",
+                    "@BenKuchera ?\ufffd_?\ufffd\ufffd?\ufffd_?\ufffd\ufffd?\ufffd_?\ufffd\ufffd?\ufffd_?\ufffd\ufffd",
+                    "Bloody Kat and Andre escape again! #mkr"
+                ]
+            },
+            "10_shots": {
+                "positive_examples": [
+                    "RT @SimplyCheecky: Wouldn't it nice if Annie ends up in sudden death against Kat? #MKR",
+                    "Sadly this is the 2nd time I've seen this sentiment #getalife @AndyCambridgio I'm not sexist but fuck catching a girl pokemon #pokemonprobs",
+                    "Totally not sexist. At all. @Griffith_Bempah Why is there women's football I'm not sexist but I find it irrelevant",
+                    "RT @EvanSutton96: Now I'm not sexist but there ain't no woman in the world that can pull of Thor!!! He's a fucking man!! Always has been al?\ufffd_",
+                    "RT @KanoWyatt: @jennahhhx I pay the bills in this household it's the least she can do"
+                ],
+                "negative_examples": [
+                    "#MKR. Bad luck Annie And Lloyd. Your punishment is 2 weeks of camping and cooking outdoors.",
+                    "RT @jasonschreier: I investigated GamerGate's latest conspiracy theory, and, as expected, it's full of half-truths and nonsense: http://t.c?\ufffd_",
+                    "This episode is so much fun! Nak ada kat situ jugak :3 #mkr",
+                    "@asem_1994 Go to Wiki and read the section about the attack on Karbala. http://t.co/HiJHAE8l00 Search scaled the walls\"\"",
+                    "Not to mention the BJS survey does not consider it rape when a man has sex with an unconscious, intoxicated woman, just like rapists."
+                ]
+            }
+        }
+    }
+}

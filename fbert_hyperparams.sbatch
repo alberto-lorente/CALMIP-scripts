@@ -15,5 +15,3 @@ echo "$PWD"
 cd ..
 
 python3 initial_cl_fbert_agem.py
-
-
