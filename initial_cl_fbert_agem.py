@@ -878,15 +878,9 @@ seed = 42
 set_seed(seed)
 
 load_dotenv("env_vars.env")
-# hf_token = os.environ.get("HF_ACCESS_TOKEN")
-# HfFolder.save_token(hf_token)
-# print(whoami()["name"])
 
 model_ids =     [
-                # "FacebookAI/roberta-base",
-                # "Xuhui/ToxDect-roberta-large",
                 "diptanu/fBERT"
-                # "GroNLP/hateBERT"
                 ]
 
 data_set_up =   [
@@ -949,6 +943,9 @@ for experiment in experiments_cl:
 
     cl_params = cl_hyperparams[cl_technique]
     hyper_param_str = "=".join([str(k) + "=" + str(v) for k, v in cl_params.items()])
+
+    print("HP string: ", hyper_param_str)
+    
     model.init_cl(cl_technique, **cl_params)
 
     optimizer = AdamW(model.model.parameters(), lr=lr)
