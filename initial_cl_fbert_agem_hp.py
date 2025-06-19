@@ -899,7 +899,7 @@ data_set_up = {       "type":"alternate_mis_raci",
                 "training_ks":  None,      }  
         
 
-cl_techniques = "agem"
+cl_technique = "agem"
 
 cl_hyperparams = {
         "ewc": {"ewc_lambda":1000},

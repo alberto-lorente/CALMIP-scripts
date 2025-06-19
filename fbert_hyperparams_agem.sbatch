@@ -12,6 +12,10 @@ module load conda/24.11.1
 conda activate hate
 
 echo "$PWD"
+mv initial_cl_fbert_agem_hp.py ..
+mv initial_cl_fbert_mas.py ..
 cd ..
 
+
 python3 initial_cl_fbert_agem_hp.py
+python3 initial_cl_fbert_mas.py
