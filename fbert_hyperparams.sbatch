@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J fbert-HYPERPARAMS
+#SBATCH -J fbert-ewc
 #SBATCH -N 1
 #SBATCH -n 36
 #SBATCH --ntasks-per-node=36
@@ -14,4 +14,4 @@ conda activate hate
 echo "$PWD"
 cd ..
 
-python3 initial_cl_fbert_agem.py
+python3 initial_cl_fbert_ewc.py

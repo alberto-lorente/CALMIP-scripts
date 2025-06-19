@@ -7,6 +7,7 @@ from typing import Dict, List
 
 import itertools
 import random
+import tqdm
 
 from datetime import date, datetime
 import emoji
@@ -569,7 +570,7 @@ def train(  model,
     # overrides the optimizer in case the params change
     optimizer = torch.optim.AdamW(model.model.parameters(), lr=lr)
 
-    for epoch in range(epochs):
+    for epoch in tqdm.tqdm(range(epochs)):
 
         if cl_technique == "zero_shot":
             break # uncomment for zero-shot perf
@@ -699,7 +700,7 @@ def train(  model,
     print("Testing")
 
     tests = [] # this is going to be a list of the log dictionaries
-    for idx, current_testing_loader in enumerate(test_loaders):
+    for idx, current_testing_loader in tqdm.tqdm(enumerate(test_loaders)):
         # print(testing_order[idx])
         # print(current_testing_loader)
         # print(type(current_testing_loader))
@@ -784,13 +785,13 @@ def continual_learning( model,
   # print()
 
   testing_order = list(data_loaders_train.keys()) + list(data_loaders_zero.keys())
-  print("Testing order")
-  print(testing_order)
+#   print("Testing order")
+#   print(testing_order)
   # for the test_loaders i have to filter them to get a list of the second index of each loader
   test_ds = list(data_loaders_train.values()) + list(data_loaders_zero.values())
   test_loaders = [loader[2] for loader in test_ds]
-  print("Test loaders")
-  print(test_loaders)
+#   print("Test loaders")
+#   print(test_loaders)
 
   test_results_for_df = []
   for time, current_training_dataset in enumerate(data_loaders_train): # current tr_ds is a string!!
@@ -805,19 +806,14 @@ def continual_learning( model,
     else:
       num_samples = "all"
     current_dataset_name = training_order[time]
-    print(current_training_dataset)
+    # print(current_training_dataset)
     # print(type(current_training_dataset))
     current_training_dataloader = data_loaders_train[current_training_dataset]
-    print(current_training_dataloader) # dataloader with the three indices train/val/test
+    # print(current_training_dataloader) # dataloader with the three indices train/val/test
     print()
     print(f"Epochs in the current time: {epochs}\nNumber of training samples: {num_samples}\nCurrent Dataset: {current_dataset_name}")
 
     trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) # in case I increase/decrease the number of params
-
-    ############################## GETTING THE EXP PARAMS, SERVING THE DATA, SAMPLING AND ALL OF THAT WORKS WELL ##################################
-
-    # continue
-
 
     model, train_vals, tests = train(model=model,
                                     model_id=model_id,
@@ -842,10 +838,6 @@ def continual_learning( model,
                                     )
     test_results_for_df.extend(tests)
 
-    # print(len(test_results_for_df))
-    # print(test_results_for_df[0])
-    # print(test_results_for_df)
-
     time_results = {"time": time,
                     "train_val": train_vals,
                     "test":tests}
@@ -856,10 +848,6 @@ def continual_learning( model,
     print()
     print()
 
-    if cl_technique == "zero_shot":
-      break # uncomment for zero-shot
-
-  print(test_results_for_df) # all the tests for each time are here
   df_log_test = pd.DataFrame(test_results_for_df, columns=test_results_for_df[0].keys())
   df_log_test.fillna(0, inplace=True)
 
@@ -893,37 +881,18 @@ load_dotenv("env_vars.env")
 # HfFolder.save_token(hf_token)
 # print(whoami()["name"])
 
-model_ids =     [
-                "diptanu/fBERT"
-                ]
+model_id = "diptanu/fBERT"
 
-data_set_up =   [
-        
-        {       "type":"from_general_to_alternating_miso_raci",
-                "train_test": ["davidson", "founta_hateful_57k", "ibereval", "hateval-immigrant", "hateval-women", "waseem-racism"],
-                "zero": ["evalita", "waseem-sexism"],
-                "epochs_array": [8, 8, 8, 8, 8, 8],
-                "training_ks":  None,
-
-        }
-
-                ]
-
-cl_techniques = ["ewc"]
+data_set_up = {       
+    "type":"from_general_to_alternating_miso_raci",
+    "train_test": ["davidson", "founta_hateful_57k", "ibereval", "hateval-immigrant", "hateval-women", "waseem-racism"],
+    "zero": ["evalita", "waseem-sexism"],
+    "epochs_array": [8, 8, 8, 8, 8, 8],
+    "training_ks":  None
+    }
 
 
-experiments = list(itertools.product(model_ids,
-                                    data_set_up,
-                                    ))
-
-# experiments_zero = list(itertools.product(model_ids,
-#                                     data_set_up_zero_shot,
-#                                     ))
-
-experiments_cl = list(itertools.product(model_ids,
-                                    data_set_up,
-                                    cl_techniques
-                                    ))
+cl_technique = "ewc"
 
 cl_hyperparams = {
         "ewc": {"ewc_lambda":1000},
@@ -941,65 +910,54 @@ hf_datasets = load_data_hf()
 loss_f = CrossEntropyLoss()
 lr = 1e-5
 batch_size = 32
-filter_cl_techniques = [cl_techniques[:-2]]
 cut_batch = False
-
 
 experiments_results = []
 
-for experiment in experiments_cl:
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoContinualLearner(model_id, num_labels=2, device=device)
 
-    # torch.cuda.ipc_collect()
-    # torch.cuda.empty_cache()
+cl_params = cl_hyperparams[cl_technique]
+hyper_param_str = "=".join([str(k) + "-" + str(v) for k, v in cl_params.items()])
+model.init_cl(cl_technique, **cl_params)
 
-    model_id = experiment[0]
-    cl_technique = experiment[-1]
-    # print(cl_technique)
+optimizer = AdamW(model.model.parameters(), lr=lr)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoContinualLearner(model_id, num_labels=2, device=device)
+training_order = data_set_up["train_test"]
+zero_testing_order = data_set_up["zero"]
+epochs_array = data_set_up["epochs_array"]
+ks_array = data_set_up["training_ks"]
+type_experiment = data_set_up["type"]
 
-    cl_params = cl_hyperparams[cl_technique]
-    hyper_param_str = "=".join([str(k) + "=" + str(v) for k, v in cl_params.items()])
-    model.init_cl(cl_technique, **cl_params)
+results, model =  continual_learning(model,
+                        tokenizer,
+                        model_id,
+                        training_order,
+                        zero_testing_order,
+                        hf_datasets, # loaded this var earlier in the notebook
+                        epochs_array,
+                        ks_array,
+                        cl_technique,
+                        type_experiment,
+                        batch_size,
+                        lr,
+                        cut_batch,
+                        loss_f,
+                        optimizer,
+                        exp_setup,
+                        hyper_param_str) # loaded exp_setup earlier
 
-    optimizer = AdamW(model.model.parameters(), lr=lr)
+experiment_json_name = "_".join([type_experiment, model_id.replace("/", "-"), cl_technique, hyper_param_str]) + ".json"
 
-    training_order = experiment[1]["train_test"]
-    zero_testing_order = experiment[1]["zero"]
-    epochs_array = experiment[1]["epochs_array"]
-    ks_array = experiment[1]["training_ks"]
-    type_experiment = experiment[1]["type"]
+try:
+    with open(experiment_json_name, "w") as f:
+        json.dump(results, f, indent=4)
+except Exception as e:
+    print("Result couldn't be saved.")
+    print(e)
+print(results)
 
-    results, model =  continual_learning(model,
-                            tokenizer,
-                            model_id,
-                            training_order,
-                            zero_testing_order,
-                            hf_datasets, # loaded this var earlier in the notebook
-                            epochs_array,
-                            ks_array,
-                            cl_technique,
-                            type_experiment,
-                            batch_size,
-                            lr,
-                            cut_batch,
-                            loss_f,
-                            optimizer,
-                            exp_setup,
-                            hyper_param_str) # loaded exp_setup earlier
-
-    experiment_json_name = "_".join([type_experiment, model_id.replace("/", "-"), cl_technique, hyper_param_str]) + ".json"
-
-    try:
-        with open(experiment_json_name, "w") as f:
-            json.dump(results, f, indent=4)
-    except Exception as e:
-        print("Result couldn't be saved.")
-        print(e)
-    print(results)
-
-    results["json_name"] = experiment_json_name
-    experiments_results.append(results)
+results["json_name"] = experiment_json_name
+experiments_results.append(results)
     
     
