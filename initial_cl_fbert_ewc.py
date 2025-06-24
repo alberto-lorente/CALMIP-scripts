@@ -892,16 +892,16 @@ model_id = "diptanu/fBERT"
 #     }
 # cl_technique = "ewc"
 
-data_set_up =  {
-                "type":"from_rac_to_mis",
-                "train_test": ["hateval-immigrant", "waseem-racism", "ibereval"],
-                "zero": ["davidson", "founta_hateful_57k", "evalita", "hateval-women", "waseem-sexism"],
-                "epochs_array": [8, 8, 8],
-                "training_ks": None,
-        } 
+data_set_up = {       "type":"from_general_to_alternating_miso_raci",
+                "train_test": ["davidson", "founta_hateful_57k", "ibereval", "hateval-immigrant", "hateval-women", "waseem-racism"],
+                "zero": ["evalita", "waseem-sexism"],
+                "epochs_array": [8, 8, 8, 8, 8, 8],
+                "training_ks":  None,
+
+        }  
         
 
-cl_technique = "mas"
+cl_technique = "ewc"
 
 # cl_hyperparams = {
 #         "ewc": {"ewc_lambda":400},
@@ -929,7 +929,7 @@ cl_hyperparams = {
         }
 
 
-filter_cl_techniques = ['mas']
+filter_cl_techniques = ['ewc']
 
 hf_datasets = load_data_hf()
 

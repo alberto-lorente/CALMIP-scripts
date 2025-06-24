@@ -901,13 +901,31 @@ data_set_up = {       "type":"alternate_mis_raci",
 
 cl_technique = "agem"
 
+# cl_hyperparams = {
+#         "ewc": {"ewc_lambda":400},
+#         "agem": {"mem_size":25},
+#         "lwf": {"lwf_lambda":1,
+#                 "temperature":2},
+#         "mas": {"mas_lambda":400}
+#         }
+
+
+# cl_hyperparams = {
+#         "ewc": {"ewc_lambda":1000},
+#         "agem": {"mem_size":100},
+#         "lwf": {"lwf_lambda":1,
+#                 "temperature":2},
+#         "mas": {"mas_lambda":1000}
+#         }
+
 cl_hyperparams = {
-        "ewc": {"ewc_lambda":1000},
-        "agem": {"mem_size":100},
+        "ewc": {"ewc_lambda":1500},
+        "agem": {"mem_size":150},
         "lwf": {"lwf_lambda":1,
                 "temperature":2},
-        "mas": {"mas_lambda":1000}
+        "mas": {"mas_lambda":1500}
         }
+
 
 
 filter_cl_techniques = ['agem']
