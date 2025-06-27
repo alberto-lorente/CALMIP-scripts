@@ -15,6 +15,7 @@ warnings.filterwarnings("ignore")
 from pprint import pprint as pp
 from dotenv import load_dotenv
 import os
+from huggingface_hub import whoami, HfFolder
 
 
 # In[ ]:
