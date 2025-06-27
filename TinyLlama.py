@@ -1,0 +1,537 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[60]:
+
+
+import pandas as pd 
+import numpy as np 
+import seaborn as sns 
+import matplotlib.pyplot as plt 
+import os 
+import sys 
+import warnings 
+warnings.filterwarnings("ignore") 
+from pprint import pprint as pp
+from dotenv import load_dotenv
+import os
+
+
+# In[ ]:
+
+
+def log_hf():
+    
+    load_dotenv("env_vars.env")
+    hf_token = os.environ.get("HF_ACCESS_TOKEN")
+    HfFolder.save_token(hf_token)
+    return print(whoami()["name"])
+
+
+# In[ ]:
+
+
+log_hf()
+load_dotenv("env_vars.env")
+
+
+# In[2]:
+
+
+df = pd.read_csv("df_from_exp_to_imp.csv")
+
+
+# In[3]:
+
+
+df.head()
+
+
+# In[4]:
+
+
+df["class"].unique()
+
+
+# ### Attaching the prompt to the clean post
+
+# In[5]:
+
+
+base_prompt = """You are a social media content moderator.
+INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
+MESSAGE: {}
+OUTPUT AND FORMAT: your output should be just the label."""
+
+
+# In[6]:
+
+
+def format_prompt(text, base_prompt=base_prompt):
+
+    formatted_prompt = base_prompt.format(text)
+    
+    return formatted_prompt
+
+
+# In[7]:
+
+
+df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
+
+
+# In[8]:
+
+
+df["formatted_prompt"][0:3]
+
+
+# In[9]:
+
+
+def translate_class_to_label(class_):
+
+    translation_dict = {"not_hate": "NOT HATEFUL",
+                        "explicit_hate": "HATEFUL",
+                        "implicit_hate": "HATEFUL"}
+
+    translated_label = translation_dict[class_]
+
+    return translated_label
+    
+
+
+# In[10]:
+
+
+df["label"] = df["class"].apply(translate_class_to_label)
+
+
+# In[11]:
+
+
+df["label"][0:3]
+
+
+# In[12]:
+
+
+def format_message(formatted_prompt, label=True):
+    if label:
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant"},
+            {"role": "user", "content": formatted_prompt},
+            {"role": "assistant", "content": label}
+        ]
+    else:
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant"},
+            {"role": "user", "content": formatted_prompt}
+        ]
+    return messages
+
+
+# ### Turning the Df into a DatasetDict
+
+# In[13]:
+
+
+from datasets import Dataset, DatasetDict
+
+t_1 = []
+t_2 = []
+
+for split in df["split"].unique():
+
+    split_df_1 = df[(df["split"] == split) & (df["time"] == 1)]
+    split_df_2 = df[(df["split"] == split) & (df["time"] == 2)]
+
+    hf_split_1 = Dataset.from_pandas(split_df_1)
+    hf_split_2 = Dataset.from_pandas(split_df_2)
+    
+    t_1.append(hf_split_1)
+    t_2.append(hf_split_2)
+
+hf_time_1 = DatasetDict({t_1[0]["split"][0]: t_1[0], 
+                        t_1[1]["split"][0]: t_1[1],
+                        t_1[2]["split"][0]: t_1[2]})
+
+hf_time_2 = DatasetDict({t_2[0]["split"][0]: t_2[0], 
+                        t_2[1]["split"][0]: t_2[1],
+                        t_2[2]["split"][0]: t_2[2]})
+
+
+# ## Tokenizer Work
+
+# In[14]:
+
+
+from transformers import (
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    set_seed,
+    Seq2SeqTrainer,
+    BitsAndBytesConfig,
+    LlamaTokenizer
+)
+
+
+# In[15]:
+
+
+set_seed(42)
+
+
+# In[16]:
+
+
+model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+
+# In[17]:
+
+
+tokenizer.pad_token = tokenizer.eos_token
+
+
+# Do I need to apply the chat template????????????????
+
+# In[18]:
+
+
+# padding (`bool`, defaults to `False`):
+#     Whether to pad sequences to the maximum length. Has no effect if tokenize is `False`.
+# truncation (`bool`, defaults to `False`):
+#     Whether to truncate sequences at the maximum length. Has no effect if tokenize is `False`.
+# max_length (`int`, *optional*):
+#     Maximum length (in tokens) to use for padding or truncation. Has no effect if tokenize is `False`. If
+#     not specified, the tokenizer's `max_length` attribute will be used as a default.
+
+
+# In[47]:
+
+
+def preprocess_and_tokenize(formatted_prompt, label=True, add_generation_prompt=False, context_length=512, output_messages_list=False):
+
+    messages = format_message(formatted_prompt, label)
+    tokenized = tokenizer.apply_chat_template(messages, 
+                                                tokenize=True, 
+                                                add_generation_prompt=add_generation_prompt,
+                                                padding="max_length",
+                                                truncation=True,
+                                                max_length=context_length,
+                                                return_dict=True,
+                                                return_tensors="pt")
+    if output_messages_list:
+        return tokenized, messages
+    
+    return tokenized
+
+
+# In[20]:
+
+
+example = preprocess_and_tokenize(hf_time_1["train"]["formatted_prompt"][0], hf_time_1["train"]["label"][0])
+example
+
+
+# In[21]:
+
+
+hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
+hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
+
+
+# In[22]:
+
+
+hf_time_1.set_format("torch")
+hf_time_2.set_format("torch")
+
+
+# In[23]:
+
+
+hf_time_1["train"].column_names
+
+
+# In[24]:
+
+
+cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", "target", "implied_statement", "split", "time", "formatted_prompt", "label", "__index_level_0__"]
+
+
+# In[25]:
+
+
+for split in hf_time_1:
+    if split != "test":
+        hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
+        hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
+
+
+# In[26]:
+
+
+hf_time_1["train"].column_names
+
+
+# In[27]:
+
+
+from transformers import DataCollatorForLanguageModeling
+from torch.utils.data.dataloader import DataLoader
+
+data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+
+
+# In[28]:
+
+
+batch_size = 8
+
+
+# In[29]:
+
+
+hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size)
+hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size)
+hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size)
+
+
+# In[30]:
+
+
+hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size)
+hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size)
+hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size)
+
+
+# ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
+
+# ## Model Stuff
+
+# In[31]:
+
+
+from transformers import BitsAndBytesConfig
+import torch
+
+bnb_config = BitsAndBytesConfig(  
+                                load_in_4bit= True,
+                                bnb_4bit_quant_type= "nf4",
+                                bnb_4bit_compute_dtype= torch.bfloat16,
+                                bnb_4bit_use_double_quant= True,
+                            )
+
+
+# In[32]:
+
+
+model = AutoModelForCausalLM.from_pretrained(model_id,
+                                            torch_dtype=torch.bfloat16,
+                                            device_map="auto",
+                                            quantization_config=bnb_config
+                                            )
+
+
+# In[33]:
+
+
+from torch.nn import CrossEntropyLoss
+import torch
+
+# to deal with the fact that we dont make the first token prediction
+
+def keytoken_weighted_loss(inputs, logits):
+    # Shift so that tokens < n predict n
+    shift_labels = inputs[..., 1:].contiguous()
+    shift_logits = logits[..., :-1, :].contiguous()
+    # Calculate per-token loss
+    loss_fct = CrossEntropyLoss(reduce=False)
+    loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+    # Resize and average loss per sample
+    loss_per_sample = loss.view(shift_logits.size(0), shift_logits.size(1)).mean(axis=1)
+
+    return loss_per_sample
+
+
+# In[34]:
+
+
+model_size = sum(t.numel() for t in model.parameters())
+model_size
+
+
+# In[35]:
+
+
+model
+
+
+# In[36]:
+
+
+from peft import LoraConfig, get_peft_model
+
+config = LoraConfig(
+    r=8,
+    lora_alpha=8,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    task_type="CAUSAL_LM",
+    lora_dropout=0.1,
+    bias="none",
+)
+
+model = get_peft_model(model, config)
+model.print_trainable_parameters()
+
+
+# In[37]:
+
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(device)
+model.to(device)
+
+
+# In[38]:
+
+
+from torch.optim import AdamW
+
+lr = 1e-5
+optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
+
+
+# In[43]:
+
+
+import gc
+
+
+# In[ ]:
+
+
+n_epochs = 2
+
+for epoch in range(n_epochs):
+    torch.cuda.empty_cache()
+    gc.collect()
+    model.train()
+
+    print("Epoch: ", epoch)
+    losses = []
+
+    for i, batch in enumerate(hf_time_1_train_loader):
+        if i > 0:
+            continue
+
+        torch.cuda.empty_cache()
+        gc.collect()
+
+        print("\tBatch: ", i)
+        # print(batch)
+        batch.to(device)
+        # print(batch.keys())
+        # print(batch["input_ids"].shape)
+        # print(batch["attention_mask"].shape)
+        # print(batch["labels"].shape)
+
+
+        batch = {k:torch.squeeze(v) for k,v in batch.items()}
+
+        # print(batch["input_ids"].shape)
+        # print(batch["attention_mask"].shape)
+        # print(batch["labels"].shape)
+
+
+        output = model(**batch)
+        logits = output.logits
+        loss = keytoken_weighted_loss(batch["input_ids"], logits)
+
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+        losses.append(loss.detach().item())
+
+        print(batch.keys())
+        print(loss.detach().item())
+        print(output.logits.shape)
+        print(output.probas)
+
+        if i > 3:
+            continue
+
+    epoch_loss = sum(losses)/len(hf_time_1_train_loader)
+    print(f"Epoch {epoch} Loss: {epoch_loss}")
+
+    model.eval()
+    with torch.no_grad():  
+
+        torch.cuda.empty_cache()
+        gc.collect()
+
+        val_losses = []
+
+        for i, batch in enumerate(hf_time_1_validation_loader):
+            if i > 0:
+                continue
+            batch.to(device)
+            batch = {k:torch.squeeze(v) for k,v in batch.items()}
+
+            output = model(**batch)
+            logits = output.logits
+            val_loss = keytoken_weighted_loss(batch["input_ids"], logits, keytoken_ids)
+
+            val_losses.append(val_loss.detach().item())
+
+        val_loss_epoch = sum(val_losses)/len(hf_time_1_validation_loader)
+        print(f"Epoch {epoch} Validation Loss: {val_loss_epoch}")
+
+
+# In[ ]:
+
+
+for i, test_batch in enumerate(hf_time_1["test"]):
+
+    if i > 0:
+        break
+    
+    text = test_batch["formatted_prompt"]
+    tokenized_chat_template, messages_list = preprocess_and_tokenize(text, label=False, add_generation_prompt=True, output_messages_list=True)
+    output = model.generate(**tokenized_chat_template.to(device))
+    pred = tokenizer.decode(output[0], skip_special_tokens=True)
+    
+    print(text)
+    print(tokenized_chat_template)
+    print(output)
+    print(pred)
+
+
+# In[50]:
+
+
+messages_list
+
+
+# In[58]:
+
+
+# print(tokenized_chat_template)
+# print(output)
+
+print(type(output))
+output.shape # batch_size x length
+
+
+# In[64]:
+
+
+model_name = model_id.split("/")[-1]
+model.push_to_hub(f"alberto-lorente/{model_name}_test")
+
+print("RUN SUCCESSFULLY")
