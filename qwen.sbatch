@@ -30,4 +30,4 @@ srun apptainer exec \
         --rdzv_id ${RANDOM} \
         --rdzv_backend=c10d \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
-        Qwen_from_expl_to_impl.py
+        ./Qwen_from_expl_to_impl.py
