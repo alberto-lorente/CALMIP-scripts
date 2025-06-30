@@ -127,7 +127,6 @@ def main(model_id = "Models/Qwen2.5-0.5B",
         n_epochs = 2,
         lr = 1e-5,
         lora_r = 8,
-        lora_alpha = lora_r*2,
         ):
 
     ########################################################## DATA WORK
@@ -227,6 +226,7 @@ def main(model_id = "Models/Qwen2.5-0.5B",
     print(model)
     print()
 
+    lora_alpha = lora_r*2
     config = LoraConfig(
         r=lora_r,
         lora_alpha=lora_alpha,
