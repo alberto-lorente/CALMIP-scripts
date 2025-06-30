@@ -37,42 +37,6 @@ def log_hf():
     HfFolder.save_token(hf_token)
     return print(whoami()["name"])
 
-base_prompt = """You are a social media content moderator.
-INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
-MESSAGE: {}
-OUTPUT AND FORMAT: your output should be just the label."""
-
-
-def format_prompt(text, base_prompt=base_prompt):
-
-    formatted_prompt = base_prompt.format(text)
-    
-    return formatted_prompt
-
-def translate_class_to_label(class_):
-
-    translation_dict = {"not_hate": "NOT HATEFUL",
-                        "explicit_hate": "HATEFUL",
-                        "implicit_hate": "HATEFUL"}
-
-    translated_label = translation_dict[class_]
-
-    return translated_label
-
-def format_message(formatted_prompt, label=True):
-    if label:
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant"},
-            {"role": "user", "content": formatted_prompt},
-            {"role": "assistant", "content": label}
-        ]
-    else:
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant"},
-            {"role": "user", "content": formatted_prompt}
-        ]
-    return messages
-
 # def keytoken_weighted_loss(inputs, logits):
 #     # Shift so that tokens < n predict n
 #     shift_labels = inputs[..., 1:].contiguous()
@@ -121,18 +85,14 @@ def main(model_id = "Models/Qwen2.5-0.5B",
 
     df = pd.read_csv("df_from_exp_to_imp.csv")
 
-    # ### Attaching the prompt to the clean post
-
-    df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
-    df["label"] = df["class"].apply(translate_class_to_label)
-
-    # ### Turning the Df into a DatasetDict
-
-    t_1 = []
-    t_2 = []
-
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     tokenizer.pad_token = tokenizer.eos_token
+
+    base_prompt = """You are a social media content moderator.
+INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
+MESSAGE: {}
+OUTPUT AND FORMAT: your output should be just the label."""
+
 
     def preprocess_and_tokenize(formatted_prompt, label=True, add_generation_prompt=False, context_length=512, output_messages_list=False):
 
@@ -149,7 +109,47 @@ def main(model_id = "Models/Qwen2.5-0.5B",
             return tokenized, messages
     
         return tokenized
+        
+    def format_message(formatted_prompt, label=True):
+        if label:
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant"},
+                {"role": "user", "content": formatted_prompt},
+                {"role": "assistant", "content": label}
+            ]
+        else:
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant"},
+                {"role": "user", "content": formatted_prompt}
+            ]
+        return messages
 
+    def format_prompt(text, base_prompt=base_prompt):
+
+        formatted_prompt = base_prompt.format(text)
+        
+        return formatted_prompt
+
+    def translate_class_to_label(class_):
+
+        translation_dict = {"not_hate": "NOT HATEFUL",
+                            "explicit_hate": "HATEFUL",
+                            "implicit_hate": "HATEFUL"}
+
+        translated_label = translation_dict[class_]
+
+        return translated_label
+
+    #### Attaching the prompt to the clean post
+
+
+    df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
+    df["label"] = df["class"].apply(translate_class_to_label)
+
+    # ### Turning the Df into a DatasetDict
+
+    t_1 = []
+    t_2 = []
 
     for split in df["split"].unique():
 
@@ -187,8 +187,6 @@ def main(model_id = "Models/Qwen2.5-0.5B",
             hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
-
-    batch_size = 8
 
     hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size)
     hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size)
@@ -328,6 +326,7 @@ def main(model_id = "Models/Qwen2.5-0.5B",
             print(f"Epoch {epoch} Validation Loss: {val_loss_epoch}")
 
     print()
+    
     print("_________________________________")
     print("Testing the model")
     for i, test_batch in enumerate(hf_time_1["test"]):
