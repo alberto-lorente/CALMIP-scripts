@@ -37,6 +37,12 @@ def log_hf():
     HfFolder.save_token(hf_token)
     return print(whoami()["name"])
 
+base_prompt = """You are a social media content moderator.
+INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
+MESSAGE: {}
+OUTPUT AND FORMAT: your output should be just the label."""
+
+
 def format_prompt(text, base_prompt=base_prompt):
 
     formatted_prompt = base_prompt.format(text)
@@ -125,10 +131,6 @@ print("Preapring the Data")
 df = pd.read_csv("df_from_exp_to_imp.csv")
 
 # ### Attaching the prompt to the clean post
-base_prompt = """You are a social media content moderator.
-INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
-MESSAGE: {}
-OUTPUT AND FORMAT: your output should be just the label."""
 
 df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
 df["label"] = df["class"].apply(translate_class_to_label)
