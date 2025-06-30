@@ -22,12 +22,13 @@ echo "NODES : ${SLURM_JOB_NODELIST}"
 
 
 apptainer exec \
+    --nv \
     --bind /tmpdir,/work \
     --env PYTHONUSERBASE=$ENV_PATH \
-    --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif torchrun\
+    /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif \
     --nnodes ${SLURM_NNODES} \
     --nproc_per_node=4\
     --rdzv_id ${RANDOM} \
     --rdzv_backend=c10d \
     --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
-    python3 Qwen_from_expl_to_impl.py
+    python Qwen_from_expl_to_impl.py
