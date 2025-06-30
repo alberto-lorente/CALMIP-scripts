@@ -85,8 +85,9 @@ def main(model_id = "Models/Qwen2.5-0.5B",
 
     df = pd.read_csv("df_from_exp_to_imp.csv")
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
     tokenizer.pad_token = tokenizer.eos_token
+    print(tokenizer.apply_chat_template("Hello World", tokenize=False, add_generation_prompt=True, return_tensors="pt"))
 
     base_prompt = """You are a social media content moderator.
 INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
@@ -210,7 +211,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
                                     bnb_4bit_use_double_quant= True,
                                 )
 
-    model = AutoModelForCausalLM.from_pretrained(model_id,
+    model = AutoModelForCausalLM.from_pretrained(model_id + "/Model",
                                                 torch_dtype=torch.bfloat16,
                                                 device_map="auto",
                                                 quantization_config=bnb_config
