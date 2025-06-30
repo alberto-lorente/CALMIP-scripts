@@ -10,7 +10,7 @@
 
 # set -x
 
-ENV_PATH=/users/p24057/gale/.conda/envs/hate
+ENV_PATH=/tmpdir/gale/.conda/envs/hate
 
 export MASTER_PORT=$(echo "${SLURM_JOB_ID} % 100000 % 50000 + 10001" | bc)
 export MASTER_ADDR=$(hostname --ip-address)
