@@ -8,8 +8,7 @@
 #SBATCH --mem=20000
 #SBATCH --time=12:00:00
 
-set -x
-sleep 10
+# set -x
 
 ENV_PATH=/users/p24057/gale/.conda/envs/hate
 
