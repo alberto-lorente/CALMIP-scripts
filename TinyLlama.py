@@ -160,7 +160,7 @@ hf_time_2 = DatasetDict({t_2[0]["split"][0]: t_2[0],
 
 ########################################################## TOKENIZER WORK
 
-model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+model_id = "Models/TinyLlama"
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 tokenizer.pad_token = tokenizer.eos_token
