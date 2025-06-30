@@ -97,21 +97,6 @@ def format_message(formatted_prompt, label=True):
 #     not specified, the tokenizer's `max_length` attribute will be used as a default.
 
 
-def preprocess_and_tokenize(formatted_prompt, label=True, add_generation_prompt=False, context_length=512, output_messages_list=False):
-
-    messages = format_message(formatted_prompt, label)
-    tokenized = tokenizer.apply_chat_template(messages, 
-                                                tokenize=True, 
-                                                add_generation_prompt=add_generation_prompt,
-                                                padding="max_length",
-                                                truncation=True,
-                                                max_length=context_length,
-                                                return_dict=True,
-                                                return_tensors="pt")
-    if output_messages_list:
-        return tokenized, messages
-    
-    return tokenized
 
 warnings.filterwarnings("ignore") 
 # log_hf()
@@ -146,6 +131,26 @@ def main(model_id = "Models/Qwen2.5-0.5B",
     t_1 = []
     t_2 = []
 
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    tokenizer.pad_token = tokenizer.eos_token
+
+    def preprocess_and_tokenize(formatted_prompt, label=True, add_generation_prompt=False, context_length=512, output_messages_list=False):
+
+        messages = format_message(formatted_prompt, label)
+        tokenized = tokenizer.apply_chat_template(messages, 
+                                                    tokenize=True, 
+                                                    add_generation_prompt=add_generation_prompt,
+                                                    padding="max_length",
+                                                    truncation=True,
+                                                    max_length=context_length,
+                                                    return_dict=True,
+                                                    return_tensors="pt")
+        if output_messages_list:
+            return tokenized, messages
+    
+        return tokenized
+
+
     for split in df["split"].unique():
 
         split_df_1 = df[(df["split"] == split) & (df["time"] == 1)]
@@ -167,11 +172,6 @@ def main(model_id = "Models/Qwen2.5-0.5B",
 
 
     ########################################################## TOKENIZER WORK
-
-    
-
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    tokenizer.pad_token = tokenizer.eos_token
 
     hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
     hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
