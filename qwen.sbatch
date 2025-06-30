@@ -8,6 +8,10 @@
 #SBATCH --mem=20000
 #SBATCH --time=12:00:00
 
+set -x
+sleep 10
+
+
 module load conda/24.11.1
 conda activate hate
 
@@ -20,10 +24,10 @@ echo "HOSTNAME: $(hostname)"
 echo "NODES : ${SLURM_JOB_NODELIST}"
 
 
-srun apptainer exec --bind /tmpdir,/work --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif torchrun\
+srun apptainer exec --bind /tmpdir,/work --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif\
     --nnodes ${SLURM_NNODES} \
     --nproc_per_node=4\
-    --rdzv_id ${SLURM_JOB_ID} \
+    --rdzv_id ${RANDOM} \
     --rdzv_backend=c10d \
     --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
     Qwen_from_expl_to_impl.py
