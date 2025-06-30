@@ -122,239 +122,245 @@ random.seed(42)
 torch.manual_seed(42)
 np.random.seed(42)
 
+def main(model_id = "Models/Qwen2.5-0.5B",
+        batch_size = 8,
+        n_epochs = 2,
+        lr = 1e-5,
+        lora_r = 8,
+        lora_alpha = lora_r*2,
+        ):
 
-########################################################## DATA WORK
-print("_________________________________")
-print("Preapring the Data")
+    ########################################################## DATA WORK
+    print("_________________________________")
+    print("Preapring the Data")
 
 
-df = pd.read_csv("df_from_exp_to_imp.csv")
+    df = pd.read_csv("df_from_exp_to_imp.csv")
 
-# ### Attaching the prompt to the clean post
+    # ### Attaching the prompt to the clean post
 
-df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
-df["label"] = df["class"].apply(translate_class_to_label)
+    df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
+    df["label"] = df["class"].apply(translate_class_to_label)
 
-# ### Turning the Df into a DatasetDict
+    # ### Turning the Df into a DatasetDict
 
-t_1 = []
-t_2 = []
+    t_1 = []
+    t_2 = []
 
-for split in df["split"].unique():
+    for split in df["split"].unique():
 
-    split_df_1 = df[(df["split"] == split) & (df["time"] == 1)]
-    split_df_2 = df[(df["split"] == split) & (df["time"] == 2)]
+        split_df_1 = df[(df["split"] == split) & (df["time"] == 1)]
+        split_df_2 = df[(df["split"] == split) & (df["time"] == 2)]
 
-    hf_split_1 = Dataset.from_pandas(split_df_1)
-    hf_split_2 = Dataset.from_pandas(split_df_2)
+        hf_split_1 = Dataset.from_pandas(split_df_1)
+        hf_split_2 = Dataset.from_pandas(split_df_2)
+        
+        t_1.append(hf_split_1)
+        t_2.append(hf_split_2)
+
+    hf_time_1 = DatasetDict({t_1[0]["split"][0]: t_1[0], 
+                            t_1[1]["split"][0]: t_1[1],
+                            t_1[2]["split"][0]: t_1[2]})
+
+    hf_time_2 = DatasetDict({t_2[0]["split"][0]: t_2[0], 
+                            t_2[1]["split"][0]: t_2[1],
+                            t_2[2]["split"][0]: t_2[2]})
+
+
+    ########################################################## TOKENIZER WORK
+
     
-    t_1.append(hf_split_1)
-    t_2.append(hf_split_2)
 
-hf_time_1 = DatasetDict({t_1[0]["split"][0]: t_1[0], 
-                        t_1[1]["split"][0]: t_1[1],
-                        t_1[2]["split"][0]: t_1[2]})
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    tokenizer.pad_token = tokenizer.eos_token
 
-hf_time_2 = DatasetDict({t_2[0]["split"][0]: t_2[0], 
-                        t_2[1]["split"][0]: t_2[1],
-                        t_2[2]["split"][0]: t_2[2]})
+    hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
+    hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
 
+    hf_time_1.set_format("torch")
+    hf_time_2.set_format("torch")
 
-########################################################## TOKENIZER WORK
+    cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", "target", "implied_statement", "split", "time", "formatted_prompt", "label", "__index_level_0__"]
 
-model_id = "Models/TinyLlama"
+    for split in hf_time_1:
+        if split != "test":
+            hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
+            hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
 
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-tokenizer.pad_token = tokenizer.eos_token
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
-hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
+    batch_size = 8
 
-hf_time_1.set_format("torch")
-hf_time_2.set_format("torch")
+    hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size)
+    hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size)
+    hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size)
 
-cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", "target", "implied_statement", "split", "time", "formatted_prompt", "label", "__index_level_0__"]
+    hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size)
+    hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size)
+    hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size)
 
-for split in hf_time_1:
-    if split != "test":
-        hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
-        hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
+    # ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
 
-data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+    ########################3#################### MODEL WORK
 
-batch_size = 8
+    print("_________________________________")
+    print("Loading the model and model config")
 
-hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size)
-hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size)
-hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size)
+    bnb_config = BitsAndBytesConfig(  
+                                    load_in_4bit= True,
+                                    bnb_4bit_quant_type= "nf4",
+                                    bnb_4bit_compute_dtype= torch.bfloat16,
+                                    bnb_4bit_use_double_quant= True,
+                                )
 
-hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size)
-hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size)
-hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size)
+    model = AutoModelForCausalLM.from_pretrained(model_id,
+                                                torch_dtype=torch.bfloat16,
+                                                device_map="auto",
+                                                quantization_config=bnb_config
+                                                )
 
-# ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
-
-########################3#################### MODEL WORK
-
-print("_________________________________")
-print("Loading the model and model config")
-
-bnb_config = BitsAndBytesConfig(  
-                                load_in_4bit= True,
-                                bnb_4bit_quant_type= "nf4",
-                                bnb_4bit_compute_dtype= torch.bfloat16,
-                                bnb_4bit_use_double_quant= True,
-                            )
-
-model = AutoModelForCausalLM.from_pretrained(model_id,
-                                            torch_dtype=torch.bfloat16,
-                                            device_map="auto",
-                                            quantization_config=bnb_config
-                                            )
-
-# to deal with the fact that we dont make the first token prediction??
+    # to deal with the fact that we dont make the first token prediction??
 
 
-model_size_before = sum(t.numel() for t in model.parameters())
-print("Model Size before LoRA", model_size_before)
-print(model)
-print()
+    model_size_before = sum(t.numel() for t in model.parameters())
+    print("Model Size before LoRA", model_size_before)
+    print(model)
+    print()
 
-config = LoraConfig(
-    r=8,
-    lora_alpha=8,
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-    task_type="CAUSAL_LM",
-    lora_dropout=0.1,
-    bias="none",
-)
+    config = LoraConfig(
+        r=lora_r,
+        lora_alpha=lora_alpha,
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+        task_type="CAUSAL_LM",
+        lora_dropout=0.1,
+        bias="none",
+    )
 
-model = get_peft_model(model, config)
-print("Model After LoRA")
-model.print_trainable_parameters()
+    model = get_peft_model(model, config)
+    print("Model After LoRA")
+    model.print_trainable_parameters()
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(device)
-model.to(device)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(device)
+    model.to(device)
 
 
-loss_fn = CrossEntropyLoss()
-lr = 1e-5
-optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
+    loss_fn = CrossEntropyLoss()
+    optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
+    print("_________________________________")
+    print("Training the model")
+    print()
 
-n_epochs = 2
-
-print("_________________________________")
-print("Training the model")
-print()
-
-for epoch in range(n_epochs):
-
-    torch.cuda.empty_cache()
-    gc.collect()
-    model.train()
-
-    print("Epoch: ", epoch)
-    losses = []
-
-    for i, batch in enumerate(hf_time_1_train_loader):
-        if i > 0:
-            continue
+    for epoch in range(n_epochs):
 
         torch.cuda.empty_cache()
         gc.collect()
+        model.train()
 
-        print("\tBatch: ", i)
-        # print(batch)
-        batch.to(device)
-        # print(batch.keys())
-        # print(batch["input_ids"].shape)
-        # print(batch["attention_mask"].shape)
-        # print(batch["labels"].shape)
+        print("Epoch: ", epoch)
+        losses = []
 
-
-        batch = {k:torch.squeeze(v) for k,v in batch.items()}
-
-        # print(batch["input_ids"].shape)
-        # print(batch["attention_mask"].shape)
-        # print(batch["labels"].shape)
-
-
-        output = model(**batch)
-        logits = output.logits
-        loss = loss_fn(logits, batch["labels"])
-
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
-
-        losses.append(loss.detach().item())
-
-        print(batch.keys())
-        print(loss.detach().item())
-        print(output.logits.shape)
-        print(output.probas)
-
-        if i > 3:
-            continue
-
-    epoch_loss = sum(losses)/len(hf_time_1_train_loader)
-    print(f"Epoch {epoch} Loss: {epoch_loss}")
-
-    model.eval()
-    with torch.no_grad():  
-
-        torch.cuda.empty_cache()
-        gc.collect()
-
-        val_losses = []
-
-        for i, batch in enumerate(hf_time_1_validation_loader):
+        for i, batch in enumerate(hf_time_1_train_loader):
             if i > 0:
                 continue
+
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            print("\tBatch: ", i)
+            # print(batch)
             batch.to(device)
+            # print(batch.keys())
+            # print(batch["input_ids"].shape)
+            # print(batch["attention_mask"].shape)
+            # print(batch["labels"].shape)
+
+
             batch = {k:torch.squeeze(v) for k,v in batch.items()}
+
+            # print(batch["input_ids"].shape)
+            # print(batch["attention_mask"].shape)
+            # print(batch["labels"].shape)
+
 
             output = model(**batch)
             logits = output.logits
-            val_loss = loss_fn(logits, batch["labels"])
+            loss = loss_fn(logits, batch["labels"])
 
-            val_losses.append(val_loss.detach().item())
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
 
-        val_loss_epoch = sum(val_losses)/len(hf_time_1_validation_loader)
-        print(f"Epoch {epoch} Validation Loss: {val_loss_epoch}")
+            losses.append(loss.detach().item())
 
-print()
-print("_________________________________")
-print("Testing the model")
-for i, test_batch in enumerate(hf_time_1["test"]):
+            print(batch.keys())
+            print(loss.detach().item())
+            print(output.logits.shape)
+            print(output.probas)
 
-    if i > 0:
-        break
-    
-    text = test_batch["formatted_prompt"]
-    tokenized_chat_template, messages_list = preprocess_and_tokenize(text, label=False, add_generation_prompt=True, output_messages_list=True)
-    output = model.generate(**tokenized_chat_template.to(device))
-    pred = tokenizer.decode(output[0], skip_special_tokens=True)
-    
-    print(text)
+            if i > 3:
+                continue
+
+        epoch_loss = sum(losses)/len(hf_time_1_train_loader)
+        print(f"Epoch {epoch} Loss: {epoch_loss}")
+
+        model.eval()
+        with torch.no_grad():  
+
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            val_losses = []
+
+            for i, batch in enumerate(hf_time_1_validation_loader):
+                if i > 0:
+                    continue
+                batch.to(device)
+                batch = {k:torch.squeeze(v) for k,v in batch.items()}
+
+                output = model(**batch)
+                logits = output.logits
+                val_loss = loss_fn(logits, batch["labels"])
+
+                val_losses.append(val_loss.detach().item())
+
+            val_loss_epoch = sum(val_losses)/len(hf_time_1_validation_loader)
+            print(f"Epoch {epoch} Validation Loss: {val_loss_epoch}")
+
+    print()
+    print("_________________________________")
+    print("Testing the model")
+    for i, test_batch in enumerate(hf_time_1["test"]):
+
+        if i > 0:
+            break
+        
+        text = test_batch["formatted_prompt"]
+        tokenized_chat_template, messages_list = preprocess_and_tokenize(text, label=False, add_generation_prompt=True, output_messages_list=True)
+        output = model.generate(**tokenized_chat_template.to(device))
+        pred = tokenizer.decode(output[0], skip_special_tokens=True)
+        
+        print(text)
+        print(tokenized_chat_template)
+        print(output)
+        print(pred)
+
+    print("CHECKING GENERATION")
+    print(messages_list)
+
     print(tokenized_chat_template)
     print(output)
-    print(pred)
 
-print("CHECKING GENERATION")
-print(messages_list)
+    print(type(output))
+    print(output.shape)
 
-print(tokenized_chat_template)
-print(output)
+    print("_________________________________")
+    print("Saving the model and Tokenizer")
+    model_name = model_id.split("/")[-1]
+    model.save_pretrained(f"alberto-lorente/{model_name}_test")
+    tokenizer.save_pretrained(f"alberto-lorente/{model_name}_test")
 
-print(type(output))
-print(output.shape)
+    print("RUN SUCCESSFULLY")
 
-print("_________________________________")
-print("Saving the model and Tokenizer")
-model_name = model_id.split("/")[-1]
-model.save_pretrained(f"alberto-lorente/{model_name}_test")
-tokenizer.save_pretrained(f"alberto-lorente/{model_name}_test")
-
-print("RUN SUCCESSFULLY")
+if __name__ == "__main__":
+    main()
