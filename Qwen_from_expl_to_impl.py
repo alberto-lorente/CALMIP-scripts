@@ -87,6 +87,9 @@ def main(model_id = "Models/Qwen2.5-0.5B",
 
     tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.chat_template = open(model_id + "/Tokenizer/chat_template.jinja").read()
+    print(tokenizer.chat_template)
+
     print(tokenizer.apply_chat_template("Hello World", tokenize=False, add_generation_prompt=True, return_tensors="pt"))
 
     base_prompt = """You are a social media content moderator.
