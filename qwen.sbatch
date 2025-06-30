@@ -21,7 +21,7 @@ echo "HOSTNAME: $(hostname)"
 echo "NODES : ${SLURM_JOB_NODELIST}"
 
 
-srun apptainer exec \
+apptainer exec \
     --bind /tmpdir,/work \
     --env PYTHONUSERBASE=$ENV_PATH \
     --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif torchrun\
