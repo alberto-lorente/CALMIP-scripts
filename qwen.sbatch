@@ -11,9 +11,7 @@
 set -x
 sleep 10
 
-
-module load conda/24.11.1
-conda activate hate
+ENV_PATH=/users/p24057/gale/.conda/envs/hate
 
 export MASTER_PORT=$(echo "${SLURM_JOB_ID} % 100000 % 50000 + 10001" | bc)
 export MASTER_ADDR=$(hostname --ip-address)
@@ -24,7 +22,10 @@ echo "HOSTNAME: $(hostname)"
 echo "NODES : ${SLURM_JOB_NODELIST}"
 
 
-srun apptainer exec --bind /tmpdir,/work --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif torchrun\
+srun apptainer exec \
+    --bind /tmpdir,/work \
+    --env PYTHONUSERBASE=$ENV_PATH \
+    --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif torchrun\
     --nnodes ${SLURM_NNODES} \
     --nproc_per_node=4\
     --rdzv_id ${RANDOM} \
