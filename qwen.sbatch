@@ -8,9 +8,15 @@
 #SBATCH --mem=20000
 #SBATCH --time=12:00:00
 
+# According to Olympe's documentation for PyTorch,
+# and assuming "hate" is a clone of our your PyTorch environment that includes torchrun:
+
+module load conda/24.11.1
+conda activate hate
+
 # set -x
 
-ENV_PATH=/tmpdir/gale/.conda/envs/hate
+# Based on Turpan's documentation for PyTorch multi-GPU/multinode setup
 
 export MASTER_PORT=$(echo "${SLURM_JOB_ID} % 100000 % 50000 + 10001" | bc)
 export MASTER_ADDR=$(hostname --ip-address)
@@ -20,14 +26,11 @@ export LOGLEVEL=DEBUG
 echo "HOSTNAME: $(hostname)"
 echo "NODES : ${SLURM_JOB_NODELIST}"
 
-
-srun apptainer exec \
-    --env PYTHONUSERBASE=$ENV_PATH \
-    --bind /tmpdir,/work --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif \
-    torchrun \
+torchrun \
         --nnodes ${SLURM_NNODES} \
         --nproc_per_node=4 \
         --rdzv_id ${RANDOM} \
         --rdzv_backend=c10d \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
         Qwen_from_expl_to_impl.py
+
