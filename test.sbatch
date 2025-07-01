@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #SBATCH --job-name=multinode-example
 #SBATCH --nodes=2
 #SBATCH --ntasks=2
