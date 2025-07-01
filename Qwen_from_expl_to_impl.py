@@ -240,7 +240,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
                                                 torch_dtype=torch.bfloat16,
                                                 # device_map="auto",
                                                 quantization_config=bnb_config
-                                                ).to(device)
+                                                )
 
     # to deal with the fact that we dont make the first token prediction??
 
