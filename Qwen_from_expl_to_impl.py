@@ -267,7 +267,11 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     # so that i can use 2 gpus
     model.to(device)
-    model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
+    model = DDP(model, 
+                device_ids=[local_rank], 
+                output_device=local_rank, 
+                # find_unused_parameters=True
+                )
     print(model)
     print()
 
@@ -315,7 +319,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             output = model(**batch)
             logits = output.logits
-            loss = loss_fn(logits, batch["labels"])
+            loss = output.loss
 
             loss.backward()
             optimizer.step()
@@ -350,7 +354,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
                 output = model(**batch)
                 logits = output.logits
-                val_loss = loss_fn(logits, batch["labels"])
+                val_loss = output.loss
 
                 val_losses.append(val_loss.detach().item())
 
