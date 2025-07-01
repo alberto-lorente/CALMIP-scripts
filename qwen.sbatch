@@ -4,8 +4,8 @@
 #SBATCH -n 1
 #SBATCH --ntasks-per-node=1
 #SBATCH --ntasks-per-core=1
-#SBATCH --gres=gpu:2
-#SBATCH --mem=20000
+#SBATCH --gres=gpu:4
+#SBATCH --mem=30GB
 #SBATCH --time=12:00:00
 
 # According to Olympe's documentation for PyTorch,
@@ -28,7 +28,7 @@ echo "NODES : ${SLURM_JOB_NODELIST}"
 
 torchrun \
         --nnodes ${SLURM_NNODES} \
-        --nproc_per_node=2 \
+        --nproc_per_node=4 \
         --rdzv_id ${RANDOM} \
         --rdzv_backend=c10d \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
