@@ -238,9 +238,9 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     model = AutoModelForCausalLM.from_pretrained(model_id + "/Model",
                                                 torch_dtype=torch.bfloat16,
-                                                device_map="auto",
+                                                # device_map="auto",
                                                 quantization_config=bnb_config
-                                                )
+                                                ).to(device)
 
     # to deal with the fact that we dont make the first token prediction??
 
@@ -300,7 +300,6 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             print("\tBatch: ", i)
             # print(batch)
-            batch.to(local_rank)
             # print(batch.keys())
             # print(batch["input_ids"].shape)
             # print(batch["attention_mask"].shape)
