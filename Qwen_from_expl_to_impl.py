@@ -330,10 +330,11 @@ OUTPUT AND FORMAT: your output should be just the label."""
             print(batch.keys())
             print(loss.detach().item())
             print(output.logits.shape)
-            print(output)
-
+            # print(output)
+            
             if i > 3:
                 continue
+        print(losses)
 
         epoch_loss = sum(losses)/len(losses)
         print(f"Epoch {epoch} Loss: {epoch_loss}")
@@ -357,8 +358,8 @@ OUTPUT AND FORMAT: your output should be just the label."""
                 val_loss = output.loss
 
                 val_losses.append(val_loss.detach().item())
-
-            val_loss_epoch = sum(val_losses)/len(hf_time_1_validation_loader)
+            print(val_losses)
+            val_loss_epoch = sum(val_losses)/len(val_losses)
             print(f"Epoch {epoch} Validation Loss: {val_loss_epoch}")
 
     print()
@@ -372,7 +373,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
         
         text = test_batch["formatted_prompt"]
         tokenized_chat_template, messages_list = preprocess_and_tokenize(text, label=False, add_generation_prompt=True, output_messages_list=True)
-        output = model.generate(**tokenized_chat_template.to(device))
+        output = model.module.generate(**tokenized_chat_template.to(device))
         pred = tokenizer.decode(output[0], skip_special_tokens=True)
         
         print(text)
@@ -392,7 +393,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
     print("_________________________________")
     print("Saving the model and Tokenizer")
     model_name = model_id.split("/")[-1]
-    model.save_pretrained(f"alberto-lorente/{model_name}_test")
+    model.module.save_pretrained(f"alberto-lorente/{model_name}_test")
     tokenizer.save_pretrained(f"alberto-lorente/{model_name}_test")
 
     print("RUN SUCCESSFULLY")
