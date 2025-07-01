@@ -327,13 +327,16 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             losses.append(loss.detach().item())
 
-            print(batch.keys())
-            print(loss.detach().item())
-            print(output.logits.shape)
+            # print(batch.keys())
+            print("Batch Loss: ", loss.detach().item())
+            print()
+            print("Logits shape: ", output.logits.shape)
             # print(output)
             
             if i > 3:
                 continue
+        print()
+        print("EPOCH LOSSES")
         print(losses)
 
         epoch_loss = sum(losses)/len(losses)
@@ -341,7 +344,9 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
         model.eval()
         with torch.no_grad():  
-
+            print("_________________________________")
+            print("Validating the model")
+            print()
             torch.cuda.empty_cache()
             gc.collect()
 
@@ -358,9 +363,11 @@ OUTPUT AND FORMAT: your output should be just the label."""
                 val_loss = output.loss
 
                 val_losses.append(val_loss.detach().item())
+            print("Validation Losses")
             print(val_losses)
             val_loss_epoch = sum(val_losses)/len(val_losses)
             print(f"Epoch {epoch} Validation Loss: {val_loss_epoch}")
+            print()
 
     print()
     
@@ -376,16 +383,23 @@ OUTPUT AND FORMAT: your output should be just the label."""
         output = model.module.generate(**tokenized_chat_template.to(device))
         pred = tokenizer.decode(output[0], skip_special_tokens=True)
         
-        print(text)
-        print(tokenized_chat_template)
-        print(output)
-        print(pred)
+        print("Text: ", text)
+        print()
+        print("Tokenized Chat Template: ", tokenized_chat_template)
+        print()
+        print("Output: ", output)
+        print()
+        print("Prediction: ", pred)
 
     print("CHECKING GENERATION")
+    print()
     print(messages_list)
-
+    print()
     print(tokenized_chat_template)
+    print()
     print(output)
+    print()
+    print(pred)
 
     print(type(output))
     print(output.shape)
@@ -393,8 +407,8 @@ OUTPUT AND FORMAT: your output should be just the label."""
     print("_________________________________")
     print("Saving the model and Tokenizer")
     model_name = model_id.split("/")[-1]
-    model.module.save_pretrained(f"alberto-lorente/{model_name}_test")
-    tokenizer.save_pretrained(f"alberto-lorente/{model_name}_test")
+    model.module.save_pretrained(f"alberto-lorente/{model_name}/model_test")
+    tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
 
