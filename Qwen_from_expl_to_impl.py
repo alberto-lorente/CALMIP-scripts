@@ -91,136 +91,140 @@ def main(model_id = "Models/Qwen2.5-0.5B",
     world_size = dist.get_world_size()
 
     ########################################################## DATA WORK
-    print("_________________________________")
-    print("Preapring the Data")
+    if local_rank == 0:
+        print("_________________________________")
+        print("Preapring the Data")
+
+        print("_________________________________")
+        print("Preapring the Data")
 
 
-    df = pd.read_csv("df_from_exp_to_imp.csv")
+        df = pd.read_csv("df_from_exp_to_imp.csv")
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.chat_template = open(model_id + "/Tokenizer/chat_template.jinja").read()
-    print(tokenizer.chat_template)
+        tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.chat_template = open(model_id + "/Tokenizer/chat_template.jinja").read()
+        print(tokenizer.chat_template)
 
-    print(tokenizer.apply_chat_template("Hello World", tokenize=False, add_generation_prompt=True, return_tensors="pt"))
+        print(tokenizer.apply_chat_template("Hello World", tokenize=False, add_generation_prompt=True, return_tensors="pt"))
 
-    base_prompt = """You are a social media content moderator.
-INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
-MESSAGE: {}
-OUTPUT AND FORMAT: your output should be just the label."""
+        base_prompt = """You are a social media content moderator.
+    INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
+    MESSAGE: {}
+    OUTPUT AND FORMAT: your output should be just the label."""
 
 
-    def preprocess_and_tokenize(formatted_prompt, label=True, add_generation_prompt=False, context_length=512, output_messages_list=False):
+        def preprocess_and_tokenize(formatted_prompt, label=True, add_generation_prompt=False, context_length=512, output_messages_list=False):
 
-        messages = format_message(formatted_prompt, label)
-        tokenized = tokenizer.apply_chat_template(messages, 
-                                                    tokenize=True, 
-                                                    add_generation_prompt=add_generation_prompt,
-                                                    padding="max_length",
-                                                    truncation=True,
-                                                    max_length=context_length,
-                                                    return_dict=True,
-                                                    return_tensors="pt")
-        if output_messages_list:
-            return tokenized, messages
-    
-        return tokenized
+            messages = format_message(formatted_prompt, label)
+            tokenized = tokenizer.apply_chat_template(messages, 
+                                                        tokenize=True, 
+                                                        add_generation_prompt=add_generation_prompt,
+                                                        padding="max_length",
+                                                        truncation=True,
+                                                        max_length=context_length,
+                                                        return_dict=True,
+                                                        return_tensors="pt")
+            if output_messages_list:
+                return tokenized, messages
         
-    def format_message(formatted_prompt, label=True):
-        if label:
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": formatted_prompt},
-                {"role": "assistant", "content": label}
-            ]
-        else:
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": formatted_prompt}
-            ]
-        return messages
+            return tokenized
+            
+        def format_message(formatted_prompt, label=True):
+            if label:
+                messages = [
+                    {"role": "system", "content": "You are a helpful assistant"},
+                    {"role": "user", "content": formatted_prompt},
+                    {"role": "assistant", "content": label}
+                ]
+            else:
+                messages = [
+                    {"role": "system", "content": "You are a helpful assistant"},
+                    {"role": "user", "content": formatted_prompt}
+                ]
+            return messages
 
-    def format_prompt(text, base_prompt=base_prompt):
+        def format_prompt(text, base_prompt=base_prompt):
 
-        formatted_prompt = base_prompt.format(text)
-        
-        return formatted_prompt
+            formatted_prompt = base_prompt.format(text)
+            
+            return formatted_prompt
 
-    def translate_class_to_label(class_):
+        def translate_class_to_label(class_):
 
-        translation_dict = {"not_hate": "NOT HATEFUL",
-                            "explicit_hate": "HATEFUL",
-                            "implicit_hate": "HATEFUL"}
+            translation_dict = {"not_hate": "NOT HATEFUL",
+                                "explicit_hate": "HATEFUL",
+                                "implicit_hate": "HATEFUL"}
 
-        translated_label = translation_dict[class_]
+            translated_label = translation_dict[class_]
 
-        return translated_label
+            return translated_label
 
-    #### Attaching the prompt to the clean post
-
-
-    df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
-    df["label"] = df["class"].apply(translate_class_to_label)
-
-    # ### Turning the Df into a DatasetDict
-
-    t_1 = []
-    t_2 = []
-
-    for split in df["split"].unique():
-
-        split_df_1 = df[(df["split"] == split) & (df["time"] == 1)]
-        split_df_2 = df[(df["split"] == split) & (df["time"] == 2)]
-
-        hf_split_1 = Dataset.from_pandas(split_df_1)
-        hf_split_2 = Dataset.from_pandas(split_df_2)
-        
-        t_1.append(hf_split_1)
-        t_2.append(hf_split_2)
-
-    hf_time_1 = DatasetDict({t_1[0]["split"][0]: t_1[0], 
-                            t_1[1]["split"][0]: t_1[1],
-                            t_1[2]["split"][0]: t_1[2]})
-
-    hf_time_2 = DatasetDict({t_2[0]["split"][0]: t_2[0], 
-                            t_2[1]["split"][0]: t_2[1],
-                            t_2[2]["split"][0]: t_2[2]})
+        #### Attaching the prompt to the clean post
 
 
-    ########################################################## TOKENIZER WORK
+        df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
+        df["label"] = df["class"].apply(translate_class_to_label)
 
-    hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
-    hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
+        # ### Turning the Df into a DatasetDict
 
-    hf_time_1.set_format("torch")
-    hf_time_2.set_format("torch")
+        t_1 = []
+        t_2 = []
 
-    cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", "target", "implied_statement", "split", "time", "formatted_prompt", "label", "__index_level_0__"]
+        for split in df["split"].unique():
 
-    for split in hf_time_1:
-        if split != "test":
-            hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
-            hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
+            split_df_1 = df[(df["split"] == split) & (df["time"] == 1)]
+            split_df_2 = df[(df["split"] == split) & (df["time"] == 2)]
 
-    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+            hf_split_1 = Dataset.from_pandas(split_df_1)
+            hf_split_2 = Dataset.from_pandas(split_df_2)
+            
+            t_1.append(hf_split_1)
+            t_2.append(hf_split_2)
 
-    sampler_train_1 = DistributedSampler(hf_time_1["train"], num_replicas=world_size, rank=local_rank, shuffle=False)
-    sampler_train_2 = DistributedSampler(hf_time_2["train"], num_replicas=world_size, rank=local_rank, shuffle=False)
+        hf_time_1 = DatasetDict({t_1[0]["split"][0]: t_1[0], 
+                                t_1[1]["split"][0]: t_1[1],
+                                t_1[2]["split"][0]: t_1[2]})
 
-    sampler_validation_1 = DistributedSampler(hf_time_1["validation"], num_replicas=world_size, rank=local_rank, shuffle=False)
-    sampler_validation_2 = DistributedSampler(hf_time_2["validation"], num_replicas=world_size, rank=local_rank, shuffle=False)
-
-    sampler_test_1 = DistributedSampler(hf_time_1["test"], num_replicas=world_size, rank=local_rank, shuffle=False)
-    sampler_test_2 = DistributedSampler(hf_time_2["test"], num_replicas=world_size, rank=local_rank, shuffle=False)
+        hf_time_2 = DatasetDict({t_2[0]["split"][0]: t_2[0], 
+                                t_2[1]["split"][0]: t_2[1],
+                                t_2[2]["split"][0]: t_2[2]})
 
 
-    hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_train_1)
-    hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_validation_1)
-    hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_test_1)
+        ########################################################## TOKENIZER WORK
 
-    hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_train_2)
-    hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_validation_2)
-    hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_test_2)
+        hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
+        hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
+
+        hf_time_1.set_format("torch")
+        hf_time_2.set_format("torch")
+
+        cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", "target", "implied_statement", "split", "time", "formatted_prompt", "label", "__index_level_0__"]
+
+        for split in hf_time_1:
+            if split != "test":
+                hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
+                hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
+
+        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+
+        sampler_train_1 = DistributedSampler(hf_time_1["train"], num_replicas=world_size, rank=local_rank, shuffle=False)
+        sampler_train_2 = DistributedSampler(hf_time_2["train"], num_replicas=world_size, rank=local_rank, shuffle=False)
+
+        sampler_validation_1 = DistributedSampler(hf_time_1["validation"], num_replicas=world_size, rank=local_rank, shuffle=False)
+        sampler_validation_2 = DistributedSampler(hf_time_2["validation"], num_replicas=world_size, rank=local_rank, shuffle=False)
+
+        sampler_test_1 = DistributedSampler(hf_time_1["test"], num_replicas=world_size, rank=local_rank, shuffle=False)
+        sampler_test_2 = DistributedSampler(hf_time_2["test"], num_replicas=world_size, rank=local_rank, shuffle=False)
+
+
+        hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_train_1)
+        hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_validation_1)
+        hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_test_1)
+
+        hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_train_2)
+        hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_validation_2)
+        hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_test_2)
 
     # ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
 
@@ -292,6 +296,9 @@ OUTPUT AND FORMAT: your output should be just the label."""
         gc.collect()
         model.train()
 
+        global_training_losses = []
+        global_validation_losses = []
+
         print("Epoch: ", epoch)
         losses = []
 
@@ -327,20 +334,21 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             losses.append(loss.detach().item())
 
-            # print(batch.keys())
-            print("Batch Loss: ", loss.detach().item())
-            print()
-            print("Logits shape: ", output.logits.shape)
-            # print(output)
-            
-            if i > 3:
-                continue
-        print()
-        print("EPOCH LOSSES")
-        print(losses)
+        epoch_loss = sum(losses) / len(losses) # loss on current device
 
-        epoch_loss = sum(losses)/len(losses)
-        print(f"Epoch {epoch} Loss: {epoch_loss}")
+        epoch_loss_tensor = torch.tensor(epoch_loss, device=device)
+
+        dist.all_reduce(epoch_loss_tensor, op=dist.ReduceOp.SUM) # loss on all devices
+
+        epoch_loss_tensor /= world_size # avg
+
+        if local_rank == 0:
+            print(f"Epoch {epoch} Loss: {epoch_loss_tensor.item()}")
+            global_training_losses.append(epoch_loss_tensor.item())
+
+            
+        print()
+
 
         model.eval()
         with torch.no_grad():  
@@ -363,52 +371,65 @@ OUTPUT AND FORMAT: your output should be just the label."""
                 val_loss = output.loss
 
                 val_losses.append(val_loss.detach().item())
-            print("Validation Losses")
-            print(val_losses)
+            
             val_loss_epoch = sum(val_losses)/len(val_losses)
-            print(f"Epoch {epoch} Validation Loss: {val_loss_epoch}")
-            print()
+            val_loss_tensor = torch.tensor(val_loss_epoch, device=device)
+            dist.all_reduce(val_loss_tensor, op=dist.ReduceOp.SUM)
+            val_loss_tensor /= world_size
+
+            if local_rank == 0:
+                print(f"Epoch {epoch} Validation Loss: {val_loss_tensor.item()}")
+                global_validation_losses.append(val_loss_tensor.item())
+
 
     print()
+    if local_rank == 0:
+        print("---------------------TRAINING ENDED---------------")
+        print("Final Training Losses:", global_training_losses)
+        print("Final Validation Losses:", global_validation_losses)
+
+
     
-    print("_________________________________")
-    print("Testing the model")
-    for i, test_batch in enumerate(hf_time_1["test"]):
+    if local_rank == 0:
+        print("_________________________________")
+        print("Testing the model")
+        for i, test_batch in enumerate(hf_time_1["test"]):
 
-        if i > 0:
-            break
-        
-        text = test_batch["formatted_prompt"]
-        tokenized_chat_template, messages_list = preprocess_and_tokenize(text, label=False, add_generation_prompt=True, output_messages_list=True)
-        output = model.module.generate(**tokenized_chat_template.to(device))
-        pred = tokenizer.decode(output[0], skip_special_tokens=True)
-        
-        print("Text: ", text)
+            if i > 0:
+                break
+            
+            text = test_batch["formatted_prompt"]
+            tokenized_chat_template, messages_list = preprocess_and_tokenize(text, label=False, add_generation_prompt=True, output_messages_list=True)
+            output = model.module.generate(**tokenized_chat_template.to(device))
+            pred = tokenizer.decode(output[0], skip_special_tokens=True)
+            
+            print("Text: ", text)
+            print()
+            print("Tokenized Chat Template: ", tokenized_chat_template)
+            print()
+            print("Output: ", output)
+            print()
+            print("Prediction: ", pred)
+
+        print("CHECKING GENERATION")
         print()
-        print("Tokenized Chat Template: ", tokenized_chat_template)
+        print(messages_list)
         print()
-        print("Output: ", output)
+        print(tokenized_chat_template)
         print()
-        print("Prediction: ", pred)
+        print(output)
+        print()
+        print(pred)
 
-    print("CHECKING GENERATION")
-    print()
-    print(messages_list)
-    print()
-    print(tokenized_chat_template)
-    print()
-    print(output)
-    print()
-    print(pred)
+        print(type(output))
+        print(output.shape)
 
-    print(type(output))
-    print(output.shape)
-
-    print("_________________________________")
-    print("Saving the model and Tokenizer")
-    model_name = model_id.split("/")[-1]
-    model.module.save_pretrained(f"alberto-lorente/{model_name}/model_test")
-    tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
+    if local_rank == 0:
+        print("_________________________________")
+        print("Saving the model and Tokenizer")
+        model_name = model_id.split("/")[-1]
+        model.module.save_pretrained(f"alberto-lorente/{model_name}/model_test")
+        tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
 
