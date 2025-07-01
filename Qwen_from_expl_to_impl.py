@@ -300,7 +300,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             print("\tBatch: ", i)
             # print(batch)
-            batch.to(loca_rank)
+            batch.to(local_rank)
             # print(batch.keys())
             # print(batch["input_ids"].shape)
             # print(batch["attention_mask"].shape)
