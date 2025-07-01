@@ -80,7 +80,7 @@ torch.manual_seed(42)
 np.random.seed(42)
 
 def main(model_id = "Models/Qwen2.5-0.5B",
-        batch_size = 8,
+        batch_size = 4,
         n_epochs = 2,
         lr = 1e-5,
         lora_r = 8,
@@ -267,7 +267,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     # so that i can use 2 gpus
     model.to(device)
-    model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
     print(model)
     print()
 
@@ -331,7 +331,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
             if i > 3:
                 continue
 
-        epoch_loss = sum(losses)/len(hf_time_1_train_loader)
+        epoch_loss = sum(losses)/len(losses)
         print(f"Epoch {epoch} Loss: {epoch_loss}")
 
         model.eval()
