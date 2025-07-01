@@ -18,6 +18,7 @@ import gc
 
 import torch
 import torch.distributed as dist
+from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
 from torch.nn import CrossEntropyLoss
@@ -203,7 +204,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True)
+    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=False)
 
 
     hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
