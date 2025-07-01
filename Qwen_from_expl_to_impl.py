@@ -204,16 +204,23 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=False)
+    sampler_train_1 = DistributedSampler(hf_time_1["train"], num_replicas=world_size, rank=rank, shuffle=False)
+    sampler_train_2 = DistributedSampler(hf_time_2["train"], num_replicas=world_size, rank=rank, shuffle=False)
+
+    sampler_validation_1 = DistributedSampler(hf_time_1["validation"], num_replicas=world_size, rank=rank, shuffle=False)
+    sampler_validation_2 = DistributedSampler(hf_time_2["validation"], num_replicas=world_size, rank=rank, shuffle=False)
+
+    sampler_test_1 = DistributedSampler(hf_time_1["test"], num_replicas=world_size, rank=rank, shuffle=False)
+    sampler_test_2 = DistributedSampler(hf_time_2["test"], num_replicas=world_size, rank=rank, shuffle=False)
 
 
-    hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
-    hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
-    hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
+    hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_train_1)
+    hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_validation_1)
+    hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_test_1)
 
-    hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
-    hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
-    hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
+    hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_train_2)
+    hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_validation_2)
+    hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_test_2)
 
     # ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
 
