@@ -17,6 +17,8 @@ from huggingface_hub import whoami, HfFolder
 import gc
 
 import torch
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
 from torch.nn import CrossEntropyLoss
 from torch.utils.data.dataloader import DataLoader
@@ -60,6 +62,11 @@ def log_hf():
 #     Maximum length (in tokens) to use for padding or truncation. Has no effect if tokenize is `False`. If
 #     not specified, the tokenizer's `max_length` attribute will be used as a default.
 
+def setup():
+    dist.init_process_group("gloo|nccl|c10d")
+    local_rank = int(os.environ["LOCAL_RANK"])
+    torch.cuda.set_device(local_rank)
+    return local_rank
 
 
 warnings.filterwarnings("ignore") 
@@ -77,6 +84,10 @@ def main(model_id = "Models/Qwen2.5-0.5B",
         lr = 1e-5,
         lora_r = 8,
         ):
+
+    local_rank = setup()
+    device = torch.device(f"cuda:{local_rank}")
+    world_size = dist.get_world_size()
 
     ########################################################## DATA WORK
     print("_________________________________")
@@ -192,13 +203,16 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-    hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size)
-    hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size)
-    hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size)
+    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True)
 
-    hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size)
-    hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size)
-    hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size)
+
+    hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
+    hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
+    hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
+
+    hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
+    hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
+    hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler)
 
     # ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
 
@@ -242,9 +256,15 @@ OUTPUT AND FORMAT: your output should be just the label."""
     print("Model After LoRA")
     model.print_trainable_parameters()
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(device)
-    model.to(device)
+
+    # so that i can use 2 gpus
+    model.to(local_rank)
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
+
+
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    # print(device)
+    # model.to(device)
 
 
     loss_fn = CrossEntropyLoss()
