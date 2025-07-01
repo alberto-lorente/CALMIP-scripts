@@ -266,8 +266,8 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
 
     # so that i can use 2 gpus
-    model.to(local_rank)
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
+    model.to(device)
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     print(model)
     print()
 
@@ -307,7 +307,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
             # print(batch["labels"].shape)
 
 
-            batch = {k:torch.squeeze(v) for k,v in batch.items()}
+            batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
             # print(batch["input_ids"].shape)
             # print(batch["attention_mask"].shape)
@@ -347,7 +347,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
                 if i > 0:
                     continue
                 # batch.to(device)
-                batch = {k:torch.squeeze(v) for k,v in batch.items()}
+                batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
                 output = model(**batch)
                 logits = output.logits
