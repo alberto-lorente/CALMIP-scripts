@@ -299,7 +299,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             print("\tBatch: ", i)
             # print(batch)
-            batch.to(device)
+            # batch.to(device)
             # print(batch.keys())
             # print(batch["input_ids"].shape)
             # print(batch["attention_mask"].shape)
@@ -345,7 +345,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
             for i, batch in enumerate(hf_time_1_validation_loader):
                 if i > 0:
                     continue
-                batch.to(device)
+                # batch.to(device)
                 batch = {k:torch.squeeze(v) for k,v in batch.items()}
 
                 output = model(**batch)
