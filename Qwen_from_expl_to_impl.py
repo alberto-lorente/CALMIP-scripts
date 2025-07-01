@@ -63,7 +63,7 @@ def log_hf():
 #     not specified, the tokenizer's `max_length` attribute will be used as a default.
 
 def setup():
-    dist.init_process_group("gloo|nccl|c10d")
+    dist.init_process_group("nccl")
     local_rank = int(os.environ["LOCAL_RANK"])
     torch.cuda.set_device(local_rank)
     return local_rank
