@@ -330,7 +330,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
             print(batch.keys())
             print(loss.detach().item())
             print(output.logits.shape)
-            print(output.probas)
+            print(output)
 
             if i > 3:
                 continue
