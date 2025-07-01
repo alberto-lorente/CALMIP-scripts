@@ -268,7 +268,8 @@ OUTPUT AND FORMAT: your output should be just the label."""
     # so that i can use 2 gpus
     model.to(local_rank)
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
-
+    print(model)
+    print()
 
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     # print(device)
@@ -299,7 +300,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             print("\tBatch: ", i)
             # print(batch)
-            # batch.to(device)
+            batch.to(loca_rank)
             # print(batch.keys())
             # print(batch["input_ids"].shape)
             # print(batch["attention_mask"].shape)
