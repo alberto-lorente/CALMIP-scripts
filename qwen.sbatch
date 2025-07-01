@@ -1,11 +1,10 @@
 #!/bin/bash
 #SBATCH -J qwen
 #SBATCH -N 1
-#SBATCH -n 1
-#SBATCH --ntasks-per-node=1
-#SBATCH --ntasks-per-core=1
+#SBATCH --ntasks=4
+#SBATCH --ntasks-per-node=4
 #SBATCH --gres=gpu:4
-#SBATCH --mem=30GB
+#SBATCH --mem=64GB
 #SBATCH --time=12:00:00
 
 # According to Olympe's documentation for PyTorch,
