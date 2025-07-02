@@ -245,8 +245,8 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     ########################################################## TOKENIZER WORK
 
-    hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
-    hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["formatted_prompt", "label"], batched=False)
+    hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)
+    hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)
 
     hf_time_1.set_format("torch")
     hf_time_2.set_format("torch")
