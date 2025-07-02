@@ -184,8 +184,8 @@ OUTPUT AND FORMAT: your output should be just the label."""
         eos_n = input_ids_tokenized.shape[1] - labels_left_padded.shape[1]
         eos_n_tensor = torch.zeros((1, eos_n), dtype=labels_tokenized.dtype, device=labels_tokenized.device)
         print("FILLING PAD WITH")
-        print(tokenizer.encode(tokenizer.pad_token))
-        eos_n_tensor.fill_(tokenizer.encode(tokenizer.pad_token))
+        print(tokenizer.encode(tokenizer.pad_token, add_special_tokens=False)[0])
+        eos_n_tensor.fill_(tokenizer.encode(tokenizer.pad_token, add_special_tokens=False)[0])
         labels_padded = torch.cat([labels_left_padded, eos_n_tensor], dim=1)
 
         # print(labels_padded.shape == input_ids_tokenized.shape)
