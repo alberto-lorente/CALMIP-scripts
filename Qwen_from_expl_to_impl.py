@@ -21,7 +21,7 @@ import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, Softmax
 from torch.utils.data.dataloader import DataLoader
 
 from transformers import BitsAndBytesConfig
@@ -70,6 +70,16 @@ def setup():
     return local_rank
 
 
+def get_probability_distribution(logits):
+    probability_dist = Softmax(dim=-1)(logits)
+    return probability_dist
+
+def loss_f(logits, labels):
+    loss_fn = CrossEntropyLoss(reduce=False)
+    loss = loss_fn(logits.view(-1, logits.size(-1)), labels.view(-1))
+    return loss
+
+
 warnings.filterwarnings("ignore") 
 # log_hf()
 load_dotenv("env_vars.env")
@@ -101,7 +111,8 @@ def main(model_id = "Models/Qwen2.5-0.5B",
     df = pd.read_csv("df_from_exp_to_imp.csv")
 
     tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
-    tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None: tokenizer.pad_token = '<|finetune_right_pad_id|>'
+    # tokenizer.pad_token = tokenizer.eos_token
     tokenizer.chat_template = open(model_id + "/Tokenizer/chat_template.jinja").read()
     print(tokenizer.chat_template)
 
@@ -113,41 +124,59 @@ MESSAGE: {}
 OUTPUT AND FORMAT: your output should be just the label."""
 
 
-    def preprocess_and_tokenize(formatted_prompt, label=True, add_generation_prompt=False, context_length=512, output_messages_list=False):
+    def preprocess_and_tokenize(clean_post, label, base_prompt=base_prompt, max_length=312):
 
-        messages = format_message(formatted_prompt, label)
-        tokenized = tokenizer.apply_chat_template(messages, 
-                                                    tokenize=True, 
-                                                    add_generation_prompt=add_generation_prompt,
-                                                    padding="max_length",
-                                                    truncation=True,
-                                                    max_length=context_length,
-                                                    return_dict=True,
-                                                    return_tensors="pt")
-        if output_messages_list:
-            return tokenized, messages
-    
-        return tokenized
+        # if type(label) != list:
+        #     label = [label]
+        # if type(clean_post) != list:
+        #     clean_post = [clean_post]
         
-    def format_message(formatted_prompt, label=True):
-        if label:
-            messages = [
+        prompt_plus_messages = base_prompt.format(clean_post)
+        # pp(prompt_plus_messages)
+        # pp(label)
+        messages = [
                 {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": formatted_prompt},
-                {"role": "assistant", "content": label}
+                {"role": "user", "content": prompt_plus_messages},
+                {"role": "assistant", "content": label.strip("\n")}
             ]
-        else:
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": formatted_prompt}
-            ]
-        return messages
 
-    def format_prompt(text, base_prompt=base_prompt):
+        # print(messages)
+        chat_template = tokenizer.apply_chat_template(messages, tokenize=False, continue_final_message=False, add_special_tokens=False).rstrip()
+        # print(chat_template)
 
-        formatted_prompt = base_prompt.format(text)
+        # why is the chat template putting a new line at the end of the end of sequence
+        # pp(chat_template)
+        input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False, padding="max_length", max_length=max_length)["input_ids"]
+
+        # getting the normal text just to know how much we need to add to the left as -100 and right as pad token
+        input_ids_shape = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False, padding=False)["input_ids"]
+        # print(input_ids_tokenized)
+
+        # getting the label target to only predict the actual label and ignore the prompt
+        labels_tokenized = tokenizer(label + tokenizer.eos_token, add_special_tokens=True, return_tensors="pt")["input_ids"]
+        shape = input_ids_shape.shape[1] - labels_tokenized.shape[1]
+        zeros = torch.zeros((1, shape), dtype=labels_tokenized.dtype, device=labels_tokenized.device)
+        zeros.fill_(-100) # acc to llama docs
+        labels_left_padded = torch.cat([zeros, labels_tokenized], dim=1)
+
+        eos_n = input_ids_tokenized.shape[1] - labels_left_padded.shape[1]
+        eos_n_tensor = torch.zeros((1, eos_n), dtype=labels_tokenized.dtype, device=labels_tokenized.device)
+        eos_n_tensor.fill_(tokenizer.pad_token)
+        labels_padded = torch.cat([labels_left_padded, eos_n_tensor], dim=1)
+
+        # print(labels_padded.shape == input_ids_tokenized.shape)
+
+        # shifting because we dont predict the first token
+        input_ids_tokenized_left_shifted = input_ids_tokenized[:, :-1]
+        labels_tokenized_right_shifted = labels_padded[:, 1:]
+
+        attention_mask = input_ids_tokenized_left_shifted != tokenizer.pad_token_id
         
-        return formatted_prompt
+        return {
+            "input_ids": input_ids_tokenized_left_shifted,
+            "labels": labels_tokenized_right_shifted,
+            "attention_mask": attention_mask
+        }
 
     def translate_class_to_label(class_):
 
@@ -283,11 +312,17 @@ OUTPUT AND FORMAT: your output should be just the label."""
     # model.to(device)
 
 
-    loss_fn = CrossEntropyLoss()
+    loss_fn = CrossEntropyLoss() # calc the loss just for the output token, "the prediction"
+
+
+
+
     optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
     print("_________________________________")
     print("Training the model")
     print()
+
+    # for task in tasks/dataset - train, eval
 
     for epoch in range(n_epochs):
 
@@ -325,7 +360,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             output = model(**batch)
             logits = output.logits
-            loss = output.loss
+            loss = loss_fn(logits, batch["labels"])
 
             loss.backward()
             optimizer.step()
@@ -342,6 +377,14 @@ OUTPUT AND FORMAT: your output should be just the label."""
         epoch_loss_tensor /= world_size # avg
 
         if local_rank == 0:
+            print("-------------------------EXAMPLE BATCH, OUTPUT AND SO ON----------------")
+            print(batch["input_ids"])
+            print(batch["labels"])
+            print(batch["attention_mask"])
+            print("LOSS: ", loss)
+            print("OUTPUT: ", output)
+            print()
+            print("----------------------------------------------------------------")
             print(f"Epoch {epoch} Loss: {epoch_loss_tensor.item()}")
             global_training_losses.append(epoch_loss_tensor.item())
 
@@ -390,6 +433,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     
     if local_rank == 0:
+        # add the testing def from the other experiment
         print("_________________________________")
         print("Testing the model")
         for i, test_batch in enumerate(hf_time_1["test"]):

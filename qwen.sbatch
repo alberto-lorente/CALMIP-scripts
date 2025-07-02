@@ -33,3 +33,26 @@ torchrun \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
         Qwen_from_expl_to_impl.py
 
+
+# torchrun \
+#         --nnodes ${SLURM_NNODES} \
+#         --nproc_per_node=4 \
+#         --rdzv_id ${RANDOM} \
+#         --rdzv_backend=c10d \
+#         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
+#         Qwen_from_expl_to_impl.py -> change to the other script
+
+# torchrun \
+#         --nnodes ${SLURM_NNODES} \
+#         --nproc_per_node=4 \
+#         --rdzv_id ${RANDOM} \
+#         --rdzv_backend=c10d \
+#         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
+
+# torchrun \
+#         --nnodes ${SLURM_NNODES} \
+#         --nproc_per_node=4 \
+#         --rdzv_id ${RANDOM} \
+#         --rdzv_backend=c10d \
+#         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
+#         Qwen_from_expl_to_impl.py -> change to the other script
