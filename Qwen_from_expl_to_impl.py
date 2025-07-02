@@ -70,6 +70,7 @@ def setup():
     return local_rank
 
 
+
 def get_probability_distribution(logits):
     probability_dist = Softmax(dim=-1)(logits)
     return probability_dist
@@ -122,6 +123,27 @@ def main(model_id = "Models/Qwen2.5-0.5B",
 INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
 MESSAGE: {}
 OUTPUT AND FORMAT: your output should be just the label."""
+
+
+    def format_message(formatted_prompt, label=True):
+        if label:
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant"},
+                {"role": "user", "content": formatted_prompt},
+                {"role": "assistant", "content": label}
+            ]
+        else:
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant"},
+                {"role": "user", "content": formatted_prompt}
+            ]
+        return messages
+
+    def format_prompt(text, base_prompt=base_prompt):
+
+        formatted_prompt = base_prompt.format(text)
+        
+        return formatted_prompt
 
 
     def preprocess_and_tokenize(clean_post, label, base_prompt=base_prompt, max_length=312):
