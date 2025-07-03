@@ -253,6 +253,7 @@ def log_test(model,
         mode=None,
         tokenizer=None,
         base_prompt=None,
+        device=None,
         ):
 
 
@@ -288,7 +289,7 @@ def log_test(model,
 
     # print(current_testing_dataset)
     try:
-        test_metrics = test_model(model, tokenizer, base_prompt, test_ds, mode=mode, verbose=False)
+        test_metrics = test_model(model, tokenizer, base_prompt, test_ds, mode=mode, verbose=False, device=device)
     except Exception as e:
         print("TESTING FAILED")
         print(e)
@@ -655,7 +656,8 @@ def main(
                             metrics=[f1_score, precision_score, recall_score, roc_auc_score],
                             mode=mode,
                             tokenizer=tokenizer,
-                            base_prompt=base_prompt)
+                            base_prompt=base_prompt,
+                            device=device)
         print(test_result)
 
 
