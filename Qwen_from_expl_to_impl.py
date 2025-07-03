@@ -188,7 +188,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             print(type(input_ids_tokenized))
             if input_ids_tokenized.shape[0] == 1:
                 print("wrong size")
-                input_ids_tokenized = input_ids_tokenized.unsqueeze(0)
+                input_ids_tokenized = input_ids_tokenized.squeeze(0)
             print("NEW SHAPE")
             print(input_ids_tokenized.shape)
             ######################
@@ -489,8 +489,8 @@ def train(  model,
                             type_experiment=type_experiment,
                             cl_technique=cl_technique,
                             time=time,
-                            current_training_dataset=current_training_dataset,
-                            current_testing_dataset=current_testing_dataset,
+                            current_training_dataset=training_order[time],
+                            current_testing_dataset=training_order[idx],
                             training_order=training_order,
                             trainable_params=n_trainable_params,
                             epochs=n_epochs,
