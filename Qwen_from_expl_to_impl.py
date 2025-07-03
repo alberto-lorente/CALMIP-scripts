@@ -154,7 +154,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
     with torch.no_grad():
         
         for i, test_item in enumerate(tqdm(ds["test"])):
-
+            print(test_item)
             target_label = test_item["label"]
 
             if target_label == "NOT HATEFUL":
@@ -454,7 +454,7 @@ def train(  model,
         print("Final Validation Losses:", global_validation_losses)
 
     if local_rank == 0:
-        tests = []
+        tests_results = []
         print(test_datasets)
         for idx, test_loader in enumerate(test_datasets):
             print(test_loader)
@@ -479,8 +479,8 @@ def train(  model,
                             tokenizer=tokenizer,
                             base_prompt=base_prompt,
                             device=device)
-            tests.append(test_result)
-
+            tests_results.append(test_result)
+            print(test_result)
         train_val_log = {"model_id": model_id,
                     "current_ds_training": current_training_dataset,
                     "epochs": int(n_epochs),
@@ -495,7 +495,7 @@ def train(  model,
 
         # print(tests)
 
-    return model, tests, train_val_log 
+        return model, tests_results, train_val_log 
 
 def continual_training(model,
                         model_id,
