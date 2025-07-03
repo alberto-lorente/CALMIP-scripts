@@ -515,8 +515,8 @@ def train(  model,
         tests_results = []
         print(test_datasets)
         for idx, test_ds in enumerate(test_datasets):
-            test_data_name = str(test_ds.keys()[0])
-            test_loader = test_ds.values()[0]
+            test_data_name = str(list(test_ds.keys())[0])
+            test_loader = list(test_ds.values())[0]
             print("TESTING - " + test_data_name)
             print(test_loader)
             # print("-------------------------------------------------------")
