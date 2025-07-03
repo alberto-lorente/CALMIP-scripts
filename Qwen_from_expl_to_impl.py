@@ -505,6 +505,7 @@ def continual_training(model,
                         hf_datasets,
                         epochs_array,
                         ks_array,
+                        n_samples_per_ds,
                         cl_technique,
                         type_experiment,
                         hyperparam_str,
@@ -560,14 +561,14 @@ def continual_training(model,
         # torch.cuda.empty_cache()
         n_epochs = epochs_array[time]
         if ks_array != None:
-            num_samples = ks_array[time]
+            n_samples = ks_array[time]
         else:
-            num_samples = "all"
+            n_samples = n_samples_per_ds[time]
 
         current_dataset_name = training_order[time]
         current_testing_dataset = testing_order[time]
 
-        print(f"Epochs in the current time: {n_epochs}\nNumber of training samples: {num_samples}\nCurrent Dataset: {current_dataset_name}")
+        print(f"Epochs in the current time: {n_epochs}\nNumber of training samples: {n_samples}\nCurrent Dataset: {current_dataset_name}")
 
         ############################## GETTING THE EXP PARAMS, SERVING THE DATA, SAMPLING AND ALL OF THAT WORKS WELL ##################################
 
@@ -932,6 +933,7 @@ def main(
                                                         hf_datasets=hf_datasets,
                                                         epochs_array=epochs_array,
                                                         ks_array=ks_array,
+                                                        n_samples_per_ds=n_samples_per_ds,
                                                         cl_technique=cl_technique,
                                                         type_experiment=type_experiment,
                                                         hyperparam_str=hyper_param_str,
