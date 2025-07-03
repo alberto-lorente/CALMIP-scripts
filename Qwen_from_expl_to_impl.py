@@ -506,8 +506,8 @@ def train(  model,
         print(test_datasets)
         for idx, test_loader in enumerate(test_datasets):
             print(test_loader)
-            print("-------------------------------------------------------")
-            print("fails here")
+            # print("-------------------------------------------------------")
+            # print("fails here")
             test_result = log_test(model=model,
                             model_id=model_id,
                             test_ds=test_loader,
@@ -1023,6 +1023,9 @@ def main(
 
     if local_rank==0:
         print("_________________________________")
+        print("Saving the results")
+        pp(test_results)
+        pp(train_results)
         experiment_json_name = "_".join([type_experiment, model_id.replace("/", "-"), cl_technique, hyper_param_str]) + ".json"
         try:
             with open(experiment_json_name, "w") as f:
