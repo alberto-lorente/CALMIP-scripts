@@ -5,7 +5,7 @@
 #SBATCH --ntasks-per-node=4
 #SBATCH --gres=gpu:4
 #SBATCH --mem=64GB
-#SBATCH --time=12:00:00
+#SBATCH --time=18:00:00
 
 # According to Olympe's documentation for PyTorch,
 # and assuming "hate" is a clone of our your PyTorch environment that includes torchrun:

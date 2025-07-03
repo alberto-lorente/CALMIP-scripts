@@ -1066,8 +1066,8 @@ def main(
 
     datasets_test = []
     for i, task in enumerate(testing_order):
-        print("Task")
-        print(task)
+        # print("Task")
+        # print(task)
         split_df = df[(df["split"] == "test") & (df["task"] == task)]
         hf_split = Dataset.from_pandas(split_df)
         datasets_test.append({testing_order[i]: hf_split})
@@ -1311,8 +1311,8 @@ def main(
         print("_________________________________")
         print("Saving the model and Tokenizer")
         model_name = model_id.split("/")[-1]
-        model.module.model.save_pretrained(f"alberto-lorente/{model_name}/model_test")
-        tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
+        # model.module.model.save_pretrained(f"alberto-lorente/{model_name}/model_test")
+        # tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
     print()
@@ -1326,58 +1326,14 @@ def main(
 
 if __name__ == "__main__":
 
-    # main(
-    #     type_experiment="from_expl_to_impl",
-    #     cl_technique="vainilla_finetune",
-    #     model_id = "Models/Qwen2.5-0.5B",
-    #     training_order=["explicit_hs", "implicit_hs"],
-    #     testing_order=["explicit_hs", "implicit_hs"],
-    #     batch_size = 4,
-    #     n_epochs = 8,
-    #     lr = 1e-4,
-    #     lora_r = 8,
-    #     exp_setup = exp_setup,
-    #     mode = "test",
-    #     dataset_path="df_from_exp_to_imp.csv",
-    #     )
+    mode=None
 
-
-    # main(
-    #     type_experiment="explicit",
-    #     cl_technique="vainilla_finetune",
-    #     model_id = "Models/Qwen2.5-0.5B",
-    #     training_order=["explicit_hs"],
-    #     testing_order=["explicit_hs", "implicit_hs"],
-    #     batch_size = 4,
-    #     n_epochs = 8,
-    #     lr = 1e-4,
-    #     lora_r = 8,
-    #     exp_setup = exp_setup,
-    #     mode = "test",
-    #     dataset_path="df_from_exp_to_imp.csv",
-    #     )
-
-    # main(
-    #     type_experiment="implicit",
-    #     cl_technique="vainilla_finetune",
-    #     model_id = "Models/Qwen2.5-0.5B",
-    #     training_order=["implicit_hs"],
-    #     testing_order=["explicit_hs", "implicit_hs"],
-    #     batch_size = 4,
-    #     n_epochs = 8,
-    #     lr = 1e-4,
-    #     lora_r = 8,
-    #     exp_setup = exp_setup,
-    #     mode = "test",
-    #     dataset_path="df_from_exp_to_imp.csv",
-    #     )
-
-    cl_techniques = ["agem", "mas"]
-    for cl_technique in cl_techniques:
+    for model_id in ["Models/Qwen2.5-0.5B", "Models/TinyLlama", "Models/Llama-3.2-1B-Instruct"]:
+        
         main(
             type_experiment="from_expl_to_impl",
-            cl_technique=cl_technique,
-            model_id = "Models/Qwen2.5-0.5B",
+            cl_technique="vainilla_finetune",
+            model_id = model_id,
             training_order=["explicit_hs", "implicit_hs"],
             testing_order=["explicit_hs", "implicit_hs"],
             batch_size = 4,
@@ -1385,6 +1341,55 @@ if __name__ == "__main__":
             lr = 1e-4,
             lora_r = 8,
             exp_setup = exp_setup,
-            mode = "test",
+            mode = mode,
             dataset_path="df_from_exp_to_imp.csv",
             )
+
+
+        main(
+            type_experiment="explicit",
+            cl_technique="vainilla_finetune",
+            model_id = model_id,
+            training_order=["explicit_hs"],
+            testing_order=["explicit_hs", "implicit_hs"],
+            batch_size = 4,
+            n_epochs = 8,
+            lr = 1e-4,
+            lora_r = 8,
+            exp_setup = exp_setup,
+            mode = mode,
+            dataset_path="df_from_exp_to_imp.csv",
+            )
+
+        main(
+            type_experiment="implicit",
+            cl_technique="vainilla_finetune",
+            model_id = model_id,
+            training_order=["implicit_hs"],
+            testing_order=["explicit_hs", "implicit_hs"],
+            batch_size = 4,
+            n_epochs = 8,
+            lr = 1e-4,
+            lora_r = 8,
+            exp_setup = exp_setup,
+            mode = mode,
+            dataset_path="df_from_exp_to_imp.csv",
+            )
+
+    cl_techniques = ["ewc","agem", "mas"]
+    for cl_technique in cl_techniques:
+        for model_id in ["Models/Qwen2.5-0.5B", "Models/TinyLlama", "Models/Llama-3.2-1B-Instruct"]:
+            main(
+                type_experiment="from_expl_to_impl",
+                cl_technique=cl_technique,
+                model_id = model_id,
+                training_order=["explicit_hs", "implicit_hs"],
+                testing_order=["explicit_hs", "implicit_hs"],
+                batch_size = 4,
+                n_epochs = 8,
+                lr = 1e-4,
+                lora_r = 8,
+                exp_setup = exp_setup,
+                mode = mode,
+                dataset_path="df_from_exp_to_imp.csv",
+                )   
