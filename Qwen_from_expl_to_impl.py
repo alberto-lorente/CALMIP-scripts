@@ -546,9 +546,12 @@ def continual_training(model,
     data_loaders_val = []
     test_datasets = []
     for time, ds in enumerate(training_order):
+        print("training order")
         print(training_order)
+        print("ds")
         print(ds)
-        print(hf_datasets)
+        print("hf_datasets")
+        print(hf_datasets[time].keys())
         data_loaders_train.append(hf_datasets[time][ds]["train"])
         data_loaders_val.append(hf_datasets[time][ds]["validation"])
         test_datasets.append(hf_datasets[time][ds])
