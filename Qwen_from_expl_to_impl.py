@@ -775,7 +775,7 @@ def main(
     #     if split != "test"
     # ]
 
-    dsitr_samplers = []
+    distributed_samplers = []
     for ds in hf_datasets:
         ds_dict = {}
         print("ds:")
