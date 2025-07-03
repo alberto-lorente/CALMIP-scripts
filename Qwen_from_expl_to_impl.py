@@ -841,8 +841,8 @@ class CLTechniques:
 
             if dot_product < 0:  # Negative interference
                 scale = dot_product / (ref_norm + 1e-8)
-                for p, g_ref in zip(self.model.parameters(), self.ref_grad if p.requires_grad):
-                    if p.grad is not None:
+                for p, g_ref in zip(self.model.parameters(), self.ref_grad):
+                    if p.grad is not None and p.requires_grad:
                         p.grad -= scale * g_ref
 
     def post_task_update(self, dataloader=None):
