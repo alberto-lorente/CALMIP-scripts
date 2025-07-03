@@ -637,7 +637,8 @@ def main(
     lora_r = 8,
     exp_setup = exp_setup,
     mode = None,
-    dataset_path="df_from_exp_to_imp.csv"
+    dataset_path="df_from_exp_to_imp.csv",
+    metrics=[f1_score, precision_score, recall_score, roc_auc_score]
         ):
 
     local_rank = setup()
