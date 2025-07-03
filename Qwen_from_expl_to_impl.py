@@ -1056,7 +1056,7 @@ def main(
                                                         metrics=metrics,
                                                         mode=mode)
 
-
+    experiment_json_name = ""
     if local_rank==0:
         print("_________________________________")
         print("Saving the results")
@@ -1078,7 +1078,7 @@ def main(
             print("Train Log couldn't be saved.")
             print(e)
 
-
+    model_name = ""
     if local_rank == 0:
         print("_________________________________")
         print("Saving the model and Tokenizer")
