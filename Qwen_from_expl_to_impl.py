@@ -464,7 +464,7 @@ def train(  model,
 
         torch.cuda.empty_cache()
         gc.collect()
-        model.train()
+        model.model.train()
 
         epoch_validation_losses = []
         train_losses = []
@@ -493,18 +493,18 @@ def train(  model,
             # print(batch["labels"].shape)
             loss = loss_f(logits, batch["labels"])
 
-            if model.cl:
+            if model.module.cl:
                 batch['logits'] = outputs.logits  # needed for LwF
-                loss += model.cl.compute_regularization(batch)
-                model.cl.pre_backward(batch)
+                loss += model.module.cl.compute_regularization(batch)
+                model.module.cl.pre_backward(batch)
 
 
             loss.backward()
 
 
             # needed agem (A-GEM)
-            if model.cl:
-                model.cl.post_backward()
+            if model.module.cl:
+                model.module.cl.post_backward()
 
             optimizer.step()
             optimizer.zero_grad()
@@ -904,8 +904,9 @@ class CLTechniques:
                             for n, p in self.model.named_parameters()
                             if p.requires_grad}
 
-class AutoContinualLearner:
+class AutoContinualLearner(nn.Module):
     def __init__(self, model_name, device, quantization_config, torch_dtype=torch.bfloat16):
+        super().__init__()
         self.device = device
         # self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(
@@ -924,6 +925,8 @@ class AutoContinualLearner:
         self.n_trainable_params_lora = sum(t.numel() for t in self.model.parameters() if t.requires_grad)
         self.model.print_trainable_parameters()
         self.cl = CLTechniques(self.model, self.device, technique, **kwargs)
+    def forward(self, **kwargs):
+        return self.model(**kwargs)
 
 
 with open("llm_experiments_set_up.json", "r") as f:
@@ -1217,6 +1220,11 @@ def main(
                 output_device=local_rank, 
                 # find_unused_parameters=True
                 )
+
+    print(model)
+    print(dir(model.module))
+    print(dir(model))
+    print(model.model.module)
     # print(model)
     # print()
 
@@ -1234,7 +1242,7 @@ def main(
 
     ks_array = None
 
-    model, test_results, train_results = continual_training(model=model.model,
+    model, test_results, train_results = continual_training(model=model,
                                                         model_id=model_id,
                                                         tokenizer=tokenizer,
                                                         n_trainable_params=n_trainable_params,
