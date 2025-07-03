@@ -756,12 +756,15 @@ def main(
                     "formatted_prompt", "label", "__index_level_0__"]
 
     hf_datasets = [
-        {task_name: hf_time[split].remove_columns(cols_to_remove)}
+        {task_name: {split: hf_time[split].remove_columns(cols_to_remove)}}
         for hf_data in hf_datasets
         for task_name, hf_time in hf_data.items()
         for split in hf_time 
         if split != "test"]
 
+    print("hf_datasets before data collator:")
+    print(hf_datasets)
+    print()
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # distributed_samplers = [
