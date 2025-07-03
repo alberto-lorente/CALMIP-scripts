@@ -347,6 +347,7 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
 def train(  model, 
             model_id, 
             tokenizer,
+            hyper_param_str,
             base_prompt,
             n_epochs, 
             train_loader, 
@@ -363,7 +364,6 @@ def train(  model,
             batch_size, 
             n_samples, 
             exp_setup, 
-            hyper_param_str, 
             loss_f, 
             optimizer, 
             device, 
@@ -578,6 +578,7 @@ def continual_training(model,
         model, train_vals, tests = train(   model=model,
                                             model_id=model_id,
                                             tokenizer=tokenizer,
+                                            hyper_param_str=hyper_param_str,
                                             base_prompt=base_prompt,
                                             n_epochs=n_epochs, 
                                             train_loader=data_loaders_train[time], 
@@ -914,8 +915,7 @@ def main(
     
     print("_________________________________")
 
-    testing_order = dataset_names
-    training_order = dataset_names
+    testing_order = training_order
     hf_datasets = data_loaders
 
     epochs_array = []
@@ -927,6 +927,7 @@ def main(
                                                         model_id=model_id,
                                                         tokenizer=tokenizer,
                                                         n_trainable_params=n_trainable_params,
+                                                        hyper_param_str=hyper_param_str,
                                                         base_prompt=base_prompt,
                                                         training_order=training_order,
                                                         testing_order=testing_order,
