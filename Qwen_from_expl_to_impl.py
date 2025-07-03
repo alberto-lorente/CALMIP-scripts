@@ -1202,12 +1202,15 @@ def main(
         cl_params = cl_hyperparams[cl_technique]
         hyper_param_str = "=".join([str(k) + "-" + str(v) for k, v in cl_params.items()])
 
+        model = AutoContinualLearner(model_id + "/Model", device, bnb_config)
+        model.init_cl(technique=cl_technique, lora_config=config, **cl_params)
+
     else:
         cl_params = {"NA": "NA"}
         hyper_param_str = "NA"
 
-    model = AutoContinualLearner(model_id + "/Model", device, bnb_config)
-    model.init_cl(technique=cl_technique, lora_config=config, **cl_params)
+        model = AutoContinualLearner(model_id + "/Model", device, bnb_config)
+        model.init_cl(technique=cl_technique, lora_config=config)
 
     model = DDP(model, 
                 device_ids=[local_rank], 
