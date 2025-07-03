@@ -1300,7 +1300,7 @@ def main(
         print("_________________________________")
         print("Saving the model and Tokenizer")
         model_name = model_id.split("/")[-1]
-        model.model.module.save_pretrained(f"alberto-lorente/{model_name}/model_test")
+        model.module.model.save_pretrained(f"alberto-lorente/{model_name}/model_test")
         tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
