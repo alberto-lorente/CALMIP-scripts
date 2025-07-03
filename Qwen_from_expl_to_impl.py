@@ -920,7 +920,7 @@ def main(
     hf_datasets = data_loaders
 
     epochs_array = []
-    for i in range(n_epochs):
+    for i in range(len(training_order)):
         epochs_array.append(n_epochs)
     ks_array = None
 
