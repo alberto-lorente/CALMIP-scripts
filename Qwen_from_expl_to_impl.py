@@ -912,14 +912,14 @@ class AutoContinualLearner:
             model_name,
             quantization_config=quantization_config,
             torch_dtype=torch_dtype
-        ).to(self.device)
+        )
         self.n_initial_params = sum(t.numel() for t in self.model.parameters())
         self.n_trainable_params_initial = sum(t.numel() for t in self.model.parameters() if t.requires_grad)
         self.cl = None
 
     def init_cl(self, technique, lora_config, **kwargs):
         """Initialize continual learning technique"""
-        self.model = get_peft_model(self.model, lora_config)
+        self.model = get_peft_model(self.model, lora_config).to(self.device)
         self.n_params_lora = sum(t.numel() for t in self.model.parameters())
         self.n_trainable_params_lora = sum(t.numel() for t in self.model.parameters() if t.requires_grad)
         self.model.print_trainable_parameters()
@@ -1193,10 +1193,10 @@ def main(
     if cl_technique in ["ewc", "agem", "lwf", "mas"]:
         cl_hyperparams = {
         "ewc": {"ewc_lambda":1500},
-        "agem": {"mem_size":150},
+        "agem": {"mem_size":100},
         "lwf": {"lwf_lambda":1,
                 "temperature":2},
-        "mas": {"mas_lambda":1500}
+        "mas": {"mas_lambda":1000}
         }
 
         cl_params = cl_hyperparams[cl_technique]
