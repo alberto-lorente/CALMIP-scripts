@@ -534,6 +534,7 @@ def train(  model,
         print("Final Validation Losses:", global_validation_losses)
 
     tests_results = []
+    train_val_log = {}
     if local_rank == 0:
         # tests_results = []
         print(test_datasets)
