@@ -545,9 +545,9 @@ def continual_training(model,
     data_loaders_val = []
     test_datasets = []
     for time, ds in enumerate(training_order):
-        data_loaders_train.append(hf_datasets[ds]["train"])
-        data_loaders_val.append(hf_datasets[ds]["validation"])
-        test_datasets.append(hf_datasets[ds])
+        data_loaders_train.append(hf_datasets[time][ds]["train"])
+        data_loaders_val.append(hf_datasets[time][ds]["validation"])
+        test_datasets.append(hf_datasets[time][ds])
 
     test_results = []
     train_results = []
@@ -630,6 +630,7 @@ np.random.seed(42)
 def main(
     type_experiment:str,
     cl_technique:str,
+    train_order:list,
     model_id = "Models/Qwen2.5-0.5B",
     batch_size = 4,
     n_epochs = 2,
@@ -716,12 +717,12 @@ def main(
     datasets = []
     dataset_names = list(df["task"].unique())
 
-    for time in times_array:
+    for task in training_order:
 
         time_ds = []
         for split in df["split"].unique():
 
-            split_df = df[(df["split"] == split) & (df["time"] == time)]
+            split_df = df[(df["split"] == split) & (df["task"] == task)]
             hf_split = Dataset.from_pandas(split_df)
             time_ds.append(hf_split)
         datasets.append(time_ds)
@@ -979,6 +980,7 @@ if __name__ == "__main__":
         type_experiment="from_expl_to_impl",
         cl_technique="vainilla_finetune",
         model_id = "Models/Qwen2.5-0.5B",
+        training_order=["explicit_hs", "implicit_hs"],
         batch_size = 4,
         n_epochs = 8,
         lr = 1e-5,
