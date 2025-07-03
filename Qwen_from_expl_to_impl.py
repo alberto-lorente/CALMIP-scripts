@@ -155,11 +155,12 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
         print("TESTING DS")
         print(ds)
         print()
-        for i, test_item in enumerate(tqdm(ds["test"])):
+        for i, test_item in enumerate(ds["test"]):
             print(test_item)
             print(i)
             target_label = test_item["label"]
-
+            print("TARGET LABEL")
+            print(target_label)
             if target_label == "NOT HATEFUL":
                 target_label = 0
             elif target_label == "HATEFUL":
@@ -167,16 +168,24 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             
             labels_test.append(target_label)
 
-            clean_post = test_item["clean_post"]
-            prompt_plus_messages = base_prompt.format(clean_post)
+            formatted_prompt = test_item["formatted_prompt"]
+            # prompt_plus_messages = base_prompt.format(clean_post)
+            print("FORMATTED PROMPT")
+            print(formatted_prompt)
+
 
             messages = [
                 {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": prompt_plus_messages}
+                {"role": "user", "content": formatted_prompt}
             ]
             chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            print("CHAT TEMPLATE COMPUTED")
+            print(chat_template)
             input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)
             
+            print("TOKENIZED CHAT TEMPLATE COMPUTED")
+            print(input_ids_tokenized)
+
             ######################
             output = model.module.generate(**input_ids_tokenized, top_p=90, temperature=0.6)
             # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
@@ -460,6 +469,8 @@ def train(  model,
         print(test_datasets)
         for idx, test_loader in enumerate(test_datasets):
             print(test_loader)
+            print("-------------------------------------------------------")
+            print("fails here")
             test_result = log_test(model=model,
                             model_id=model_id,
                             test_ds=test_loader,
