@@ -159,7 +159,8 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
         # print()
         # for i, test_item in enumerate(ds["test"]):
         for i, test_item in enumerate(ds):
-            # print(test_item)
+            print("TESTING ITEM")
+            print(test_item)
             # print(i)
             target_label = test_item["label"]
             labels_strings.append(target_label)
@@ -344,6 +345,7 @@ def log_test(model,
     # print(log_test)
     # print(current_testing_dataset)
     try:
+        print("COOL UNTIL TEST MODEL-----------")
         test_metrics = test_model(model=model, tokenizer=tokenizer, base_prompt=base_prompt, ds=test_ds, mode=mode, verbose=False, device=device)
         print("Testing for " + current_testing_dataset + " completed")
     except Exception as e:
