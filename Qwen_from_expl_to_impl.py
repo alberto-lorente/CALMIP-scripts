@@ -193,7 +193,14 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             print(input_ids_tokenized.shape)
             ######################
             print("----------------right beforeoutput---------------------------------------")
-            output = model.module.generate(input_ids_tokenized, top_p=90, temperature=0.6)
+            print(model)
+            print(model.module)
+            print(dir(model))
+            print(dir(model.module))
+            try: 
+                output = model.module.generate(input_ids_tokenized, top_p=90, temperature=0.6)
+            except: 
+                output = model.generate(input_ids_tokenized, top_p=90, temperature=0.6)
             # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
             print("OUTPUT COMPUTED")
             print(output)
