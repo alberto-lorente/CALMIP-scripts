@@ -281,11 +281,8 @@ def log_test(model,
     elif current_testing_dataset not in training_order: # if we have already passed all the training indexes, that means that we are doing the zero shots, which i left at the end
         log_test["shots"] = "ZERO SHOT"
 
-    elif training_order.index(current_training_dataset)  < training_order.index(current_training_dataset):
-        log_test["shots"] = "PASSED TRAINING"
-
     else:
-        log_test["shots"] = "ZERO SHOT"
+        log_test["shots"] = "PASSED TRAINING"
 
     # print(current_testing_dataset)
     try:
