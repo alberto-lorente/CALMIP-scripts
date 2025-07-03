@@ -1097,20 +1097,20 @@ def main(
 
 if __name__ == "__main__":
 
-    main(
-        type_experiment="from_expl_to_impl",
-        cl_technique="vainilla_finetune",
-        model_id = "Models/Qwen2.5-0.5B",
-        training_order=["explicit_hs", "implicit_hs"],
-        testing_order=["explicit_hs", "implicit_hs"],
-        batch_size = 4,
-        n_epochs = 8,
-        lr = 1e-5,
-        lora_r = 8,
-        exp_setup = exp_setup,
-        mode = "test",
-        dataset_path="df_from_exp_to_imp.csv",
-        )
+    # main(
+    #     type_experiment="from_expl_to_impl",
+    #     cl_technique="vainilla_finetune",
+    #     model_id = "Models/Qwen2.5-0.5B",
+    #     training_order=["explicit_hs", "implicit_hs"],
+    #     testing_order=["explicit_hs", "implicit_hs"],
+    #     batch_size = 4,
+    #     n_epochs = 8,
+    #     lr = 1e-5,
+    #     lora_r = 8,
+    #     exp_setup = exp_setup,
+    #     mode = "test",
+    #     dataset_path="df_from_exp_to_imp.csv",
+    #     )
 
 
     main(
@@ -1128,17 +1128,17 @@ if __name__ == "__main__":
         dataset_path="df_from_exp_to_imp.csv",
         )
 
-    main(
-        type_experiment="implicit",
-        cl_technique="vainilla_finetune",
-        model_id = "Models/Qwen2.5-0.5B",
-        training_order=["implicit_hs"],
-        testing_order=["explicit_hs", "implicit_hs"],
-        batch_size = 4,
-        n_epochs = 8,
-        lr = 1e-5,
-        lora_r = 8,
-        exp_setup = exp_setup,
-        mode = "test",
-        dataset_path="df_from_exp_to_imp.csv",
-        )
+    # main(
+    #     type_experiment="implicit",
+    #     cl_technique="vainilla_finetune",
+    #     model_id = "Models/Qwen2.5-0.5B",
+    #     training_order=["implicit_hs"],
+    #     testing_order=["explicit_hs", "implicit_hs"],
+    #     batch_size = 4,
+    #     n_epochs = 8,
+    #     lr = 1e-5,
+    #     lora_r = 8,
+    #     exp_setup = exp_setup,
+    #     mode = "test",
+    #     dataset_path="df_from_exp_to_imp.csv",
+    #     )
