@@ -3,6 +3,7 @@
 
 import pandas as pd 
 import numpy as np 
+from pandas.core.base import NoNewAttributesMixin
 import seaborn as sns 
 import matplotlib.pyplot as plt 
 import os 
@@ -11,6 +12,10 @@ import warnings
 import random
 from pprint import pprint as pp
 from dotenv import load_dotenv
+from datetime import date
+import re
+import tqdm
+import emoji
 import os
 from huggingface_hub import whoami, HfFolder
 
@@ -33,6 +38,9 @@ from datasets import Dataset, DatasetDict
 
 from peft import LoraConfig, get_peft_model
 
+from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
+
+
 def log_hf():
     
     load_dotenv("env_vars.env")
@@ -40,36 +48,69 @@ def log_hf():
     HfFolder.save_token(hf_token)
     return print(whoami()["name"])
 
-# def keytoken_weighted_loss(inputs, logits):
-#     # Shift so that tokens < n predict n
-#     shift_labels = inputs[..., 1:].contiguous()
-#     shift_logits = logits[..., :-1, :].contiguous()
-#     # Calculate per-token loss
-#     loss_fct = CrossEntropyLoss(reduce=False)
-#     loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-#     # Resize and average loss per sample
-#     loss_per_sample = loss.view(shift_logits.size(0), shift_logits.size(1)).mean(axis=1)
-
-#     return loss_per_sample
-
-
-# Do I need to apply the chat template????????????????
-
-# padding (`bool`, defaults to `False`):
-#     Whether to pad sequences to the maximum length. Has no effect if tokenize is `False`.
-# truncation (`bool`, defaults to `False`):
-#     Whether to truncate sequences at the maximum length. Has no effect if tokenize is `False`.
-# max_length (`int`, *optional*):
-#     Maximum length (in tokens) to use for padding or truncation. Has no effect if tokenize is `False`. If
-#     not specified, the tokenizer's `max_length` attribute will be used as a default.
-
 def setup():
     dist.init_process_group("nccl")
     local_rank = int(os.environ["LOCAL_RANK"])
     torch.cuda.set_device(local_rank)
     return local_rank
 
+def save_results_csv(df, experiment_name, model_id, cl_technique, result_type="specific"):
 
+    cl_technique_clean = cl_technique.replace(" + ", "__")
+    id_ = model_id.replace("/", "-") + "_" + cl_technique_clean + "_" + str(date.today())
+    id_clean = experiment_name + id_.replace(" ", "_").replace(":", "-").replace(".","-") + result_type + ".csv"
+    df.to_csv(id_clean, index=False)
+    return print("Saved in path: ", id_clean)
+
+def clean_cl_name(cl_name):
+
+    regex = r'<(?:[\w\.]+)?\.([\w]+) object at'
+    matches =   re.findall(regex, cl_name)
+    clean_string = " + ".join(matches)
+    return clean_string
+
+def clean_metric_name(metric_name):
+
+    reg = r"\s([a-z_1]+)\s"
+    match_ = re.search(reg, metric_name)
+    clean_str = match_.group().strip()
+
+    return clean_str
+
+def translate_class_to_label(class_):
+
+    translation_dict = {"not_hate": "NOT HATEFUL",
+                        "explicit_hate": "HATEFUL",
+                        "implicit_hate": "HATEFUL"}
+
+    translated_label = translation_dict[class_]
+
+    return translated_label
+
+def format_message(formatted_prompt, label=True):
+    if label:
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant"},
+            {"role": "user", "content": formatted_prompt},
+            {"role": "assistant", "content": label}
+        ]
+    else:
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant"},
+            {"role": "user", "content": formatted_prompt}
+        ]
+    return messages
+
+base_prompt = """You are a social media content moderator.
+INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
+MESSAGE: {}
+OUTPUT AND FORMAT: your output should be just the label."""
+
+def format_prompt(text, base_prompt=base_prompt):
+
+    formatted_prompt = base_prompt.format(text)
+    
+    return formatted_prompt
 
 def get_probability_distribution(logits):
     probability_dist = Softmax(dim=-1)(logits)
@@ -85,9 +126,217 @@ def loss_f(logits, labels):
     
     return loss
 
+def translate_prediction_to_label(text):
+    if "NOT HATEFUL" in text:
+        text_clean = text.replace("NOT HATEFUL", "")
+        if "HATEFUL" in text_clean or "HATEFUAL" in text_clean:
+            return 2
+        else:
+            return 0
+    elif "NOT_HATEFUL" in text:
+        text_clean = text.replace("NOT_HATEFUL", "")
+        if "HATEFUL" in text_clean or "HATEFUAL" in text_clean:
+            return 2
+        else: 
+            return 0
+    else:
+        return 1
+
+# to test_model we pass the whole dataset dictionary, not just the split
+def test_model(model, tokenizer, base_prompt, ds, mode=None, verbose=False):
+
+    print("_________________________________")
+    print("Testing the model")
+
+    predictions_test = []
+    labels_test = []
+
+    model.eval()
+    with torch.no_grad():
+        
+        for i, test_item in enumerate(ds["test"]):
+
+            target_label = test_item["label"]
+
+            if target_label == "NOT HATEFUL":
+                target_label = 0
+            elif target_label == "HATEFUL":
+                target_label = 1
+            
+            labels_test.append(target_label)
+            clean_post = test_item["clean_post"]
+            prompt_plus_messages = base_prompt.format(clean_post)
+
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant"},
+                {"role": "user", "content": prompt_plus_messages}
+            ]
+            chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True).rstrip()
+            input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)
+            
+            ######################
+            output = model.module.generate(**input_ids_tokenized, top_p=90, temperature=0.6)
+            # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
+            print(output)
+            pred = tokenizer.decode(output[0][input_ids_tokenized['input_ids'].shape[1]:], skip_special_tokens=True).strip()
+            pred_label = translate_prediction_to_label(pred)
+            predictions_test.append(pred_label)
+
+            if mode != None:
+                break
+
+            if verbose:
+                print("Text: ", pred)
+                print()
+                print("Chat Template: ", chat_template)
+                print()
+                print("Tokenized Chat Template: ", input_ids_tokenized)
+                print()
+                print("Output: ", output)
+                print()
+                print("Prediction: ", pred)
+                print("____________________________________________________")
+                print("Checking the predictions")
+                print("Number of prediction batches")
+                print(len(predictions_test))
+                print("Number of predictions in each batch")
+                print(len(predictions_test[0]))
+                print()
+                print("--------------------------------------------------")
+                print("CHECKING GENERATION")
+                print()
+                print(input_ids_tokenized)
+                print()
+                print("List predictions")
+                print(predictions_test)
+                print()
+                print("List labels")
+                print(labels_test)
+
+
+    result = get_scores_from_preds(predictions_test, labels_test)
+
+    return result
+
+def get_scores_from_preds(predictions_test, labels_test, metrics=[f1_score, precision_score, recall_score]):
+    
+    y_labels = labels_test
+    y_outputs = predictions_test
+
+    result = {clean_metric_name(str(score)): float(score(y_labels, y_outputs, average='macro')) for score in metrics}
+    results_hate_class = {"HATE_" + clean_metric_name(str(score)): float(score(y_labels, y_outputs, labels=[1], average='macro')) for score in metrics if score  in [f1_score, precision_score, recall_score]}
+    results_nohate_class = {"NoHATE_" + clean_metric_name(str(score)): float(score(y_labels, y_outputs, labels=[0], average='macro')) for score in metrics if score  in [f1_score, precision_score, recall_score]}
+
+    result.update(results_hate_class)
+    result.update(results_nohate_class)
+    result["predictions"] = [int(pred_label) for pred_label in y_outputs]
+    result["labels"] = [int(actual_y) for actual_y in y_labels]
+
+    return result
+
+def log_test(model,
+        model_id:str,
+        test_ds,
+        type_experiment,
+        cl_technique:str,
+        time:int,
+        current_training_dataset:str,
+        current_testing_dataset:str,
+        training_order:list,
+        trainable_params,
+        epochs,
+        lr,
+        batch_size,
+        num_samples,
+        exp_setup,
+        hyper_param_str,
+        metrics=[f1_score, precision_score, recall_score, roc_auc_score],
+        ):
+
+
+    log_test =                                 {}
+    log_test["model"] =                        model_id
+    log_test["type_experiment"] =              type_experiment
+    log_test["n_trainable_params"] =           int(trainable_params)
+    log_test["cl_technique"]  =                cl_technique
+    log_test["time"] =                         int(time)
+    log_test["dataset"] =                      current_testing_dataset
+    log_test["curr_train"] =                   current_training_dataset
+    # log_test["curr_train_hate_type"] =         exp_setup["general_ds_categories"][current_training_dataset]
+    # log_test["curr_train_mix_type"] =          exp_setup["mixtures_ds"][current_training_dataset]
+    # log_test["hate_type_test"] =               exp_setup["general_ds_categories"][current_testing_dataset]
+    # log_test["mixture_test"] =                 exp_setup["mixtures_ds"][current_testing_dataset]
+    log_test["n_epochs_per_experience"] =      int(epochs)
+    log_test["learning_rate"] =                float(lr)
+    log_test["batch_size"] =                   int(batch_size)
+    log_test["num_samples"] =                  num_samples
+    log_test["hyper_param"] =                  hyper_param_str
+
+    if current_testing_dataset == current_training_dataset:
+        log_test["shots"] = "IN TRAINING"
+
+    elif current_testing_dataset not in training_order: # if we have already passed all the training indexes, that means that we are doing the zero shots, which i left at the end
+        log_test["shots"] = "ZERO SHOT"
+
+    elif training_order.index(current_training_dataset)  < training_order.index(current_training_dataset):
+        log_test["shots"] = "PASSED TRAINING"
+
+    else:
+        log_test["shots"] = "ZERO SHOT"
+
+    # print(current_testing_dataset)
+    try:
+        test_metrics = test_model(model, tokenizer, base_prompt, test_ds, mode=None, verbose=False)
+    except Exception as e:
+        print("TESTING FAILED")
+        print(e)
+        test_metrics = {clean_metric_name(str(score)): "FAULTY INFERENCE" for score in metrics}
+
+    log_test.update(test_metrics)
+
+    return log_test
+
+def validate_model(model, validation_loader, device, mode=None):
+
+    model.eval()
+    with torch.no_grad():
+
+        print("_________________________________")
+        print("Validating the model")
+        print()
+        torch.cuda.empty_cache()
+        gc.collect()
+
+        val_losses = [] # val loss for each batch
+
+        for i, batch in enumerate(validation_loader):
+            
+            # batch.to(device)
+            batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
+
+            output = model(**batch)
+            logits = output.logits
+            val_loss = loss_f(logits, batch["labels"])
+
+            val_losses.append(val_loss.detach().item())
+
+            if mode != None:
+                break
+        
+        val_loss_epoch = sum(val_losses)/len(val_losses)
+        val_loss_tensor = torch.tensor(val_loss_epoch, device=device)
+        dist.all_reduce(val_loss_tensor, op=dist.ReduceOp.SUM)
+        val_loss_tensor /= world_size
+
+        if local_rank == 0:
+            print(f"Validation Loss: {val_loss_tensor.item()}")
+
+    return val_loss_tensor.item()
+
+with open("llm_experiments_set_up.json", "r") as f:
+    exp_setup = json.load(f)
 
 warnings.filterwarnings("ignore") 
-# log_hf()
 load_dotenv("env_vars.env")
 
 set_seed(42)
@@ -95,11 +344,15 @@ random.seed(42)
 torch.manual_seed(42)
 np.random.seed(42)
 
-def main(model_id = "Models/Qwen2.5-0.5B",
-        batch_size = 4,
-        n_epochs = 2,
-        lr = 1e-5,
-        lora_r = 8,
+def main(
+    type_experiment:str,
+    cl_technique:str,
+    model_id = "Models/Qwen2.5-0.5B",
+    batch_size = 4,
+    n_epochs = 2,
+    lr = 1e-5,
+    lora_r = 8,
+    exp_setup = exp_setup,
         ):
 
     local_rank = setup()
@@ -110,86 +363,40 @@ def main(model_id = "Models/Qwen2.5-0.5B",
     print("_________________________________")
     print("Preapring the Data")
 
-    print("_________________________________")
-    print("Preapring the Data")
-
-
     df = pd.read_csv("df_from_exp_to_imp.csv")
 
     tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
-    if tokenizer.pad_token is None: tokenizer.pad_token = '<|finetune_right_pad_id|>'
-    # tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None and "Llama" in model_id: tokenizer.pad_token = '<|finetune_right_pad_id|>'
+    if tokenizer.pad_token is None and "Qwen" in model_id: tokenizer.pad_token = tokenizer.eos_token
     tokenizer.chat_template = open(model_id + "/Tokenizer/chat_template.jinja").read()
-    print(tokenizer.chat_template)
 
-    print(tokenizer.apply_chat_template("Hello World", tokenize=False, add_generation_prompt=True, return_tensors="pt"))
+    # print(tokenizer.chat_template)
+    # print(tokenizer.apply_chat_template("Hello World", tokenize=False, add_generation_prompt=True, return_tensors="pt"))
 
-    base_prompt = """You are a social media content moderator.
-INSTRUCTION: The following is a social media message that needs to be classified with the label HATEFUL or NOT HATEFUL.
-MESSAGE: {}
-OUTPUT AND FORMAT: your output should be just the label."""
-
-
-    def format_message(formatted_prompt, label=True):
-        if label:
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": formatted_prompt},
-                {"role": "assistant", "content": label}
-            ]
-        else:
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": formatted_prompt}
-            ]
-        return messages
-
-    def format_prompt(text, base_prompt=base_prompt):
-
-        formatted_prompt = base_prompt.format(text)
-        
-        return formatted_prompt
-
-
-    def preprocess_and_tokenize(clean_post, label, base_prompt=base_prompt, max_length=312):
-
-        # if type(label) != list:
-        #     label = [label]
-        # if type(clean_post) != list:
-        #     clean_post = [clean_post]
+    def preprocess_and_tokenize(clean_post, label, base_prompt=base_prompt, max_length=512):
         
         prompt_plus_messages = base_prompt.format(clean_post)
-        # pp(prompt_plus_messages)
-        # pp(label)
         messages = [
                 {"role": "system", "content": "You are a helpful assistant"},
                 {"role": "user", "content": prompt_plus_messages},
                 {"role": "assistant", "content": label.strip("\n")}
             ]
 
-        # print(messages)
         chat_template = tokenizer.apply_chat_template(messages, tokenize=False, continue_final_message=False, add_special_tokens=False).rstrip()
-        # print(chat_template)
-
-        # why is the chat template putting a new line at the end of the end of sequence
-        # pp(chat_template)
         input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False, padding="max_length", max_length=max_length)["input_ids"]
 
         # getting the normal text just to know how much we need to add to the left as -100 and right as pad token
         input_ids_shape = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False, padding=False)["input_ids"]
-        # print(input_ids_tokenized)
 
         # getting the label target to only predict the actual label and ignore the prompt
         labels_tokenized = tokenizer(label + tokenizer.eos_token, add_special_tokens=True, return_tensors="pt")["input_ids"]
         shape = input_ids_shape.shape[1] - labels_tokenized.shape[1]
         zeros = torch.zeros((1, shape), dtype=labels_tokenized.dtype, device=labels_tokenized.device)
-        zeros.fill_(-100) # acc to llama docs
+        zeros.fill_(-100) # for the cross entropy loss
         labels_left_padded = torch.cat([zeros, labels_tokenized], dim=1)
 
         eos_n = input_ids_tokenized.shape[1] - labels_left_padded.shape[1]
         eos_n_tensor = torch.zeros((1, eos_n), dtype=labels_tokenized.dtype, device=labels_tokenized.device)
-        # print("FILLING PAD WITH")
-        # print(tokenizer.encode(tokenizer.pad_token, add_special_tokens=False)[0])
         eos_n_tensor.fill_(tokenizer.encode(tokenizer.pad_token, add_special_tokens=False)[0])
         labels_padded = torch.cat([labels_left_padded, eos_n_tensor], dim=1)
 
@@ -207,19 +414,7 @@ OUTPUT AND FORMAT: your output should be just the label."""
             "attention_mask": attention_mask
         }
 
-    def translate_class_to_label(class_):
-
-        translation_dict = {"not_hate": "NOT HATEFUL",
-                            "explicit_hate": "HATEFUL",
-                            "implicit_hate": "HATEFUL"}
-
-        translated_label = translation_dict[class_]
-
-        return translated_label
-
     #### Attaching the prompt to the clean post
-
-
     df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
     df["label"] = df["class"].apply(translate_class_to_label)
 
@@ -252,6 +447,8 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)
     hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)
+
+    n_samples = len(hf_time_1["train"])
 
     hf_time_1.set_format("torch")
     hf_time_2.set_format("torch")
@@ -311,8 +508,8 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
     model_size_before = sum(t.numel() for t in model.parameters())
     print("Model Size before LoRA", model_size_before)
-    print(model)
-    print()
+    # print(model)
+    # print()
 
     lora_alpha = lora_r*2
     config = LoraConfig(
@@ -336,19 +533,32 @@ OUTPUT AND FORMAT: your output should be just the label."""
                 output_device=local_rank, 
                 # find_unused_parameters=True
                 )
-    print(model)
-    print()
+    # print(model)
+    # print()
+    if cl_technique in ["ewc", "agem", "lwf", "mas"]:
+        cl_hyperparams = {
+        "ewc": {"ewc_lambda":1500},
+        "agem": {"mem_size":150},
+        "lwf": {"lwf_lambda":1,
+                "temperature":2},
+        "mas": {"mas_lambda":1500}
+        }
 
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    # print(device)
-    # model.to(device)
+        cl_params = cl_hyperparams[cl_technique]
+        hyper_param_str = "=".join([str(k) + "-" + str(v) for k, v in cl_params.items()])
+
+    else:
+        cl_params = "N/A"
+        hyper_param_str = "N/A"
+
+    n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
+    
     print("_________________________________")
     print("Training the model")
     print()
 
     # for task in tasks/dataset - train, eval
-
     for epoch in range(n_epochs):
 
         torch.cuda.empty_cache()
@@ -362,33 +572,25 @@ OUTPUT AND FORMAT: your output should be just the label."""
         losses = []
 
         for i, batch in enumerate(hf_time_1_train_loader):
-            if i > 0:
-                continue
+            # if i > 0:
+            #     continue
 
             torch.cuda.empty_cache()
             gc.collect()
 
             print("\tBatch: ", i)
-            # print(batch)
-            # print(batch.keys())
-            # print(batch["input_ids"].shape)
-            # print(batch["attention_mask"].shape)
-            # print(batch["labels"].shape)
-
-
             batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
             # print(batch["input_ids"].shape)
             # print(batch["attention_mask"].shape)
             # print(batch["labels"].shape)
 
-
             output = model(**batch)
             logits = output.logits
-            print("Shape Logits")
-            print(logits.shape)
-            print("Shape Labels")
-            print(batch["labels"].shape)
+            # print("Shape Logits")
+            # print(logits.shape)
+            # print("Shape Labels")
+            # print(batch["labels"].shape)
             loss = loss_f(logits, batch["labels"])
 
             loss.backward()
@@ -406,117 +608,56 @@ OUTPUT AND FORMAT: your output should be just the label."""
         epoch_loss_tensor /= world_size # avg
 
         if local_rank == 0:
-            print("-------------------------EXAMPLE BATCH, OUTPUT AND SO ON----------------")
-            print(batch["input_ids"])
-            print(batch["labels"])
-            print(batch["attention_mask"])
-            print("LOSS: ", loss)
-            print("OUTPUT: ", output)
-            print()
-            print("----------------------------------------------------------------")
+            # print("-------------------------EXAMPLE BATCH, OUTPUT AND SO ON----------------")
+            # print(batch["input_ids"])
+            # print(batch["labels"])
+            # print(batch["attention_mask"])
+            # print("LOSS: ", loss)
+            # print("OUTPUT: ", output)
+            # print()
+            # print("----------------------------------------------------------------")
             print(f"Epoch {epoch} Loss: {epoch_loss_tensor.item()}")
             global_training_losses.append(epoch_loss_tensor.item())
 
-            
-        print()
-
-
-        model.eval()
-        with torch.no_grad():  
-            print("_________________________________")
-            print("Validating the model")
-            print()
-            torch.cuda.empty_cache()
-            gc.collect()
-
-            val_losses = []
-
-            for i, batch in enumerate(hf_time_1_validation_loader):
-                if i > 0:
-                    continue
-                # batch.to(device)
-                batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
-
-                output = model(**batch)
-                logits = output.logits
-                val_loss = output.loss
-
-                val_losses.append(val_loss.detach().item())
-            
-            val_loss_epoch = sum(val_losses)/len(val_losses)
-            val_loss_tensor = torch.tensor(val_loss_epoch, device=device)
-            dist.all_reduce(val_loss_tensor, op=dist.ReduceOp.SUM)
-            val_loss_tensor /= world_size
-
-            if local_rank == 0:
-                print(f"Epoch {epoch} Validation Loss: {val_loss_tensor.item()}")
-                global_validation_losses.append(val_loss_tensor.item())
-
+        val_loss = validate_model(model, hf_time_1_validation_loader, device)
+        global_validation_losses.append(val_loss)
 
     print()
+
     if local_rank == 0:
         print("---------------------TRAINING ENDED---------------")
         print("Final Training Losses:", global_training_losses)
         print("Final Validation Losses:", global_validation_losses)
 
-
-    
     if local_rank == 0:
-        # add the testing def from the other experiment
-        print("_________________________________")
-        print("Testing the model")
-        predictions_test = []
-        labels_test = []
-        model.eval()
-        with torch.no_grad():
-            for i, test_item in enumerate(hf_time_1["test"]):
-                if i > 0:
-                    break
-                
-                labels_test.append(test_item["label"])
-                clean_post = test_item["clean_post"]
-                prompt_plus_messages = base_prompt.format(clean_post)
+        log_test = log_test(model=model,
+                            model_id=model_id,
+                            test_ds=hf_time_1,
+                            type_experiment=type_experiment,
+                            cl_technique=cl_technique,
+                            time=0,
+                            current_training_dataset="",
+                            current_testing_dataset="",
+                            training_order=[],
+                            trainable_params=n_trainable_params,
+                            epochs=epochs,
+                            lr=lr,
+                            batch_size=batch_size,
+                            num_samples=n_samples,
+                            exp_setup=exp_setup,
+                            hyper_param_str=hyper_param_str,
+                            metrics=[f1_score, precision_score, recall_score, roc_auc_score])
+        print(log_test)
 
-                messages = [
-                    {"role": "system", "content": "You are a helpful assistant"},
-                    {"role": "user", "content": prompt_plus_messages}
-                ]
-                chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True).rstrip()
-                input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)
-                
-                ######################
-                output = model.module.generate(**input_ids_tokenized, top_p=90, temperature=0.6)
-                # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
-                pred = tokenizer.decode(output[0][input_ids_tokenized['input_ids'].shape[1]:], skip_special_tokens=True).strip()
 
-                predictions_test.append(pred)
-
-        print("Text: ", pred)
-        print()
-        print("Chat Template: ", chat_template)
-        print()
-        print("Tokenized Chat Template: ", input_ids_tokenized)
-        print()
-        print("Output: ", output)
-        print()
-        print("Prediction: ", pred)
-        print("____________________________________________________")
-        print("Checking the predictions")
-        print("Number of prediction batches")
-        print(len(predictions_test))
-        print("Number of predictions in each batch")
-        print(len(predictions_test[0]))
-        print()
-        print("--------------------------------------------------")
-        print("CHECKING GENERATION")
-        print()
-        print(input_ids_tokenized)
-        print()
-        print("List predictions")
-        print(predictions_test)
-        print()
-        print("List labels")
-        print(labels_test)
+    if local_rank==0:
+        experiment_json_name = "_".join([type_experiment, model_id.replace("/", "-"), cl_technique, hyper_param_str]) + ".json"
+        try:
+            with open(experiment_json_name, "w") as f:
+                json.dump(log_test, f, indent=4)
+        except Exception as e:
+            print("Result couldn't be saved.")
+            print(e)
 
     if local_rank == 0:
         print("_________________________________")
@@ -528,4 +669,13 @@ OUTPUT AND FORMAT: your output should be just the label."""
     print("RUN SUCCESSFULLY")
 
 if __name__ == "__main__":
-    main()
+    main(
+        type_experiment="from_expl_to_impl",
+        cl_technique="vainilla_finetune",
+        model_id = "Models/Qwen2.5-0.5B",
+        batch_size = 4,
+        n_epochs = 8,
+        lr = 1e-5,
+        lora_r = 8,
+        exp_setup = exp_setup,
+        )
