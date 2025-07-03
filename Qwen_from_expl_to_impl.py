@@ -223,7 +223,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             print(type(output))
             seq = output[0]
             print(tokenizer.decode(seq, skip_special_tokens=True).strip())
-            pred = tokenizer.decode(seq, skip_special_tokens=True).strip()
+            pred = tokenizer.decode(seq[input_ids_tokenized.shape[1]:], skip_special_tokens=True).strip()
             print("PRED COMPUTED")
             print(pred)
             pred_label = translate_prediction_to_label(pred)
@@ -235,32 +235,32 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                 break
 
             if verbose:
-                print("Text: ", pred)
+                # print("Text: ", pred)
                 print()
-                print("Chat Template: ", chat_template)
-                print()
-                print("Tokenized Chat Template: ", input_ids_tokenized)
-                print()
-                print("Output: ", output)
-                print()
-                print("Prediction: ", pred)
-                print("____________________________________________________")
-                print("Checking the predictions")
-                print("Number of prediction batches")
-                print(len(predictions_test))
-                print("Number of predictions in each batch")
-                print(len(predictions_test[0]))
-                print()
-                print("--------------------------------------------------")
-                print("CHECKING GENERATION")
-                print()
-                print(input_ids_tokenized)
-                print()
-                print("List predictions")
-                print(predictions_test)
-                print()
-                print("List labels")
-                print(labels_test)
+                # print("Chat Template: ", chat_template)
+                # print()
+                # print("Tokenized Chat Template: ", input_ids_tokenized)
+                # print()
+                # print("Output: ", output)
+                # print()
+                # print("Prediction: ", pred)
+                # print("____________________________________________________")
+                # print("Checking the predictions")
+                # print("Number of prediction batches")
+                # print(len(predictions_test))
+                # print("Number of predictions in each batch")
+                # print(len(predictions_test[0]))
+                # print()
+                # print("--------------------------------------------------")
+                # print("CHECKING GENERATION")
+                # print()
+                # print(input_ids_tokenized)
+                # print()
+                # print("List predictions")
+                # print(predictions_test)
+                # print()
+                # print("List labels")
+                # print(labels_test)
 
     result = get_scores_from_preds(predictions_test, labels_test)
 
@@ -346,7 +346,7 @@ def log_test(model,
     log_test.update(test_metrics)
 
     for k, v in log_test.items():
-        if type(v) not in [int, float, str]:
+        if type(v) not in [int, float, str, list]:
             try:
                 log_test[k] = float(v)
             except:
@@ -532,12 +532,12 @@ def train(  model,
             tests_results.append(test_result)
             print(test_result)
         train_val_log = {"model_id": model_id,
-                    "current_ds_training": current_training_dataset,
+                    "current_ds_training": training_order[time],
                     "epochs": int(n_epochs),
                     "time": int(time),
                     "num_samples_in_curr_ds": n_samples,
-                    "training_details": list(global_training_losses),
-                    "validation_details": list(global_validation_losses),
+                    "training_losses_details": list(global_training_losses),
+                    "validation_losses_details": list(global_validation_losses),
                     "type_experiment": type_experiment,
                     "cl_technique": cl_technique,
                     "train_order": " -> ".join(training_order)
@@ -545,7 +545,7 @@ def train(  model,
 
         print(tests_results)
         print(train_val_log)
-        print(model)
+        # print(model)
 
         return model, tests_results, train_val_log 
 
@@ -668,8 +668,11 @@ def continual_training(model,
         train_results.extend(train_vals)
 
         print("RESULTS FOR CURRENT EXPERIENCE DONE")
-        print()
+        print(tests)
+        print("TEST RESULTS")
         print(test_results)
+        print("TRAIN RESULTS")
+        print(train_results)
 
         if mode != None:
             break
