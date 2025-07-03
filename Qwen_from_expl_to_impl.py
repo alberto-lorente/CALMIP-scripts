@@ -478,7 +478,7 @@ def train(  model,
 
             torch.cuda.empty_cache()
             gc.collect()
-
+            batch_unsqueezed = batch
             print("\tBatch: ", i)
             batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
@@ -809,7 +809,7 @@ class CLTechniques:
         elif self.technique == "lwf" and self.old_model:
             with torch.no_grad():
                 logits = inputs['logits']
-                actual_inputs = {k:v for k,v in inputs.items() if k != "logits"}
+                actual_inputs = {k:torch.squeeze(v).to(self.device) for k,v in inputs.items() if k != "logits"}
                 old_outputs = self.old_model(**actual_inputs)
             return self.lwf_lambda * KLDivLoss(reduction='batchmean')(
                 torch.log_softmax(logits/self.temperature, dim=1),
@@ -831,6 +831,8 @@ class CLTechniques:
             # Store current gradient
             self.model.zero_grad()
             for inputs_mem, labels_mem in self.memory:
+                inputs_mem = {k:torch.squeeze(v).to(self.device) for k,v in inputs_mem.items()}
+                labels_mem = torch.squeeze(labels_mem).to(self.device)
                 outputs = self.model(**inputs_mem, labels=labels_mem)
                 outputs.loss.backward()
             self.ref_grad = [p.grad.clone() for p in self.model.parameters() if p.requires_grad] # i think this should be with req grad
@@ -857,12 +859,13 @@ class CLTechniques:
             self.model.eval()
             for batch in dataloader:
                 self.model.zero_grad()
-                inputs = {k: v.to(self.device) for k, v in batch.items()
+                inputs = {k:torch.squeeze(v).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
                 labels = batch['labels'].to(self.device)
 
                 outputs = self.model(**inputs, labels=labels)
-                outputs.loss.backward()
+                loss = loss_f(outputs.logits, labels)
+                loss.backward()
 
                 for n, p in self.model.named_parameters():
                     if p.requires_grad and p.grad is not None:
@@ -877,9 +880,9 @@ class CLTechniques:
             # Update memory buffer
             self.memory = []
             for batch in dataloader:
-                inputs = {k: v.to(self.device) for k, v in batch.items()
+                inputs = {k: torch.squeeze(v).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
-                labels = batch['labels'].to(self.device)
+                labels = torch.squeeze(batch['labels']).to(self.device)
                 self.memory.append((inputs, labels))
                 if len(self.memory) >= self.mem_size:
                     break
@@ -894,7 +897,7 @@ class CLTechniques:
             self.model.eval()
             for batch in dataloader:
                 self.model.zero_grad()
-                inputs = {k: v.to(self.device) for k, v in batch.items()
+                inputs = {k: torch.squeeze(v).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
 
                 outputs = self.model(**inputs)
