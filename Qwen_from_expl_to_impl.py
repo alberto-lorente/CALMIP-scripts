@@ -514,9 +514,9 @@ def train(  model,
     if local_rank == 0:
         tests_results = []
         print(test_datasets)
-        for idx, in enumerate(test_datasets):
-            test_data_name = str(test_datasets[idx].keys()[0])
-            test_loader = test_datasets[idx].values()[0]
+        for idx, test_ds in enumerate(test_datasets):
+            test_data_name = str(test_ds.keys()[0])
+            test_loader = test_ds.values()[0]
             print("TESTING - " + test_data_name)
             print(test_loader)
             # print("-------------------------------------------------------")
