@@ -259,9 +259,12 @@ OUTPUT AND FORMAT: your output should be just the label."""
     cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", "target", "implied_statement", "split", "time", "formatted_prompt", "label", "__index_level_0__"]
 
     for split in hf_time_1:
-        if split != "test":
-            hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
-            hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
+        # if split != "test":
+        #     hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
+        #     hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
+        hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
+        hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
+
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
