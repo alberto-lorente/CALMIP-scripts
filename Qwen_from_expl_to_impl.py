@@ -550,8 +550,8 @@ def train(  model,
         print("Final Training Losses:", global_training_losses)
         print("Final Validation Losses:", global_validation_losses)
 
-    if model.cl:
-        model.cl.post_task_update(train_loader)
+    if model.module.cl:
+        model.module.cl.post_task_update(train_loader)
 
     print("-----------POST TRAINING CL UPDATES COMPLETED---------")
 
