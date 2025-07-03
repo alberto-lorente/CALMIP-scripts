@@ -569,8 +569,6 @@ def continual_training(model,
 
         print(f"Epochs in the current time: {n_epochs}\nNumber of training samples: {num_samples}\nCurrent Dataset: {current_dataset_name}")
 
-        n_trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) # in case I increase/decrease the number of params
-
         ############################## GETTING THE EXP PARAMS, SERVING THE DATA, SAMPLING AND ALL OF THAT WORKS WELL ##################################
 
         # continue
