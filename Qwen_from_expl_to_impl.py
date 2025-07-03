@@ -466,25 +466,40 @@ OUTPUT AND FORMAT: your output should be just the label."""
         print("_________________________________")
         print("Testing the model")
         predictions_test = []
+        labels_test = []
         model.eval()
-        for i, test_batch in enumerate(hf_time_1_test_loader):
+        with torch.no_grad():
+            for i, test_item in enumerate(hf_time_1["test"]):
+                if i > 0:
+                    break
+                
+                labels_test.append(test_item["label"])
+                clean_post = test_item["clean_post"]
+                prompt_plus_messages = base_prompt.format(clean_post)
 
-            if i > 0:
-                break
+                messages = [
+                    {"role": "system", "content": "You are a helpful assistant"},
+                    {"role": "user", "content": prompt_plus_messages}
+                ]
+                chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True).rstrip()
+                input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)
+                
+                ######################
+                output = model.module.generate(**input_ids_tokenized, top_p=90, temperature=0.6)
+                # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
+                pred = tokenizer.decode(output[0][input_ids_tokenized['input_ids'].shape[1]:], skip_special_tokens=True).strip()
 
-            batch = {k:torch.squeeze(v).to(device) for k,v in test_batch.items()}
-            
-            ######################
-            output = model.module.generate(**batch, top_p=90, temperature=0.6)
-            pred = tokenizer.batch_decode(output, skip_special_tokens=True)
-            predictions_test.append(pred)
-            print("Text: ", text)
-            print()
-            print("Tokenized Chat Template: ", tokenized_chat_template)
-            print()
-            print("Output: ", output)
-            print()
-            print("Prediction: ", pred)
+                predictions_test.append(pred)
+
+        print("Text: ", pred)
+        print()
+        print("Chat Template: ", chat_template)
+        print()
+        print("Tokenized Chat Template: ", input_ids_tokenized)
+        print()
+        print("Output: ", output)
+        print()
+        print("Prediction: ", pred)
         print("____________________________________________________")
         print("Checking the predictions")
         print("Number of prediction batches")
@@ -497,15 +512,14 @@ OUTPUT AND FORMAT: your output should be just the label."""
         print()
         print(messages_list)
         print()
-        print(tokenized_chat_template)
+        print(input_ids_tokenized)
         print()
-        print(output)
+        print("List predictions")
+        print(predictions_test)
         print()
-        print(pred)
-
-        print(type(output))
-        print(output.shape)
-
+        print("List labels")
+        print(labels_test)
+        
     if local_rank == 0:
         print("_________________________________")
         print("Saving the model and Tokenizer")
