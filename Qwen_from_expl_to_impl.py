@@ -339,13 +339,6 @@ OUTPUT AND FORMAT: your output should be just the label."""
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     # print(device)
     # model.to(device)
-
-
-    loss_fn = CrossEntropyLoss() # calc the loss just for the output token, "the prediction"
-
-
-
-
     optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
     print("_________________________________")
     print("Training the model")
@@ -389,7 +382,11 @@ OUTPUT AND FORMAT: your output should be just the label."""
 
             output = model(**batch)
             logits = output.logits
-            loss = loss_fn(logits, batch["labels"])
+            print("Shape Logits")
+            print(logits.shape)
+            print("Shape Labels")
+            print(batch["labels"].shape)
+            loss = loss_f(logits, batch["labels"])
 
             loss.backward()
             optimizer.step()
