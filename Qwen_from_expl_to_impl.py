@@ -1203,7 +1203,7 @@ def main(
         hyper_param_str = "=".join([str(k) + "-" + str(v) for k, v in cl_params.items()])
 
     else:
-        cl_params = "NA"
+        cl_params = {"NA": "NA"}
         hyper_param_str = "NA"
 
     model = AutoContinualLearner(model_id + "/Model", device, bnb_config)
@@ -1344,3 +1344,20 @@ if __name__ == "__main__":
         mode = "test",
         dataset_path="df_from_exp_to_imp.csv",
         )
+
+    cl_techniques = ["ewc", "agem", "mas"]
+    for cl_technique in cl_techniques:
+        main(
+            type_experiment="from_expl_to_impl",
+            cl_technique=cl_technique,
+            model_id = "Models/Qwen2.5-0.5B",
+            training_order=["explicit_hs", "implicit_hs"],
+            testing_order=["explicit_hs", "implicit_hs"],
+            batch_size = 4,
+            n_epochs = 8,
+            lr = 1e-4,
+            lora_r = 8,
+            exp_setup = exp_setup,
+            mode = "test",
+            dataset_path="df_from_exp_to_imp.csv",
+            )
