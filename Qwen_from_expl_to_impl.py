@@ -494,9 +494,10 @@ def train(  model,
             # print("Shape Labels")
             # print(batch["labels"].shape)
             loss = loss_f(logits, batch["labels"])
-
+            print("Checking that the model type is the continual learner to do the cls")
             print(type(model.module))
-            print(dir(model.module))
+            print(type(model.module.cl))
+            # print(dir(model.module))
             if model.module.cl:
                 batch['logits'] = logits  # needed for LwF
                 loss += model.module.cl.compute_regularization(batch)
