@@ -48,10 +48,19 @@ def log_hf():
     return print(whoami()["name"])
 
 def setup():
-    dist.init_process_group("nccl")
-    local_rank = int(os.environ["LOCAL_RANK"])
-    torch.cuda.set_device(local_rank)
-    return local_rank
+    try:
+        dist.init_process_group("nccl")
+        # dist.init_process_group("gloo")
+        local_rank = int(os.environ["LOCAL_RANK"])
+        torch.cuda.set_device(local_rank)
+        return local_rank
+    except Exception as e:
+        print(e)
+        print("DISTR TRAINING ALREADY INITIALIZED")
+        local_rank = int(os.environ["LOCAL_RANK"])
+        torch.cuda.set_device(local_rank)
+        return local_rank
+
 
 def save_results_csv(df, experiment_name, model_id, cl_technique, result_type="specific"):
 
@@ -138,8 +147,14 @@ def translate_prediction_to_label(text):
             return 2
         else: 
             return 0
+    elif "HATEFUL" in text:
+        text_clean = text.replace("HATEFUL", "")
+        if "NOT_HATEFUL" in text_clean or "NOT HATEFUL" in text_clean:
+            return 2
+        else:
+            return 1
     else:
-        return 1
+        return 2
 
 # to test_model we pass the whole dataset dictionary, not just the split
 def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=False):
@@ -151,6 +166,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
     labels_test = []
     predicted_strings = []
     labels_strings = []
+    full_generation = []
 
     model.eval()
     with torch.no_grad():
@@ -228,7 +244,9 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             # print(type(output))
             seq = output[0]
             # print(tokenizer.decode(seq, skip_special_tokens=True).strip())
-            pred = tokenizer.decode(seq[input_ids_tokenized.shape[1]:], skip_special_tokens=True).strip()
+            pred = tokenizer.decode(seq[input_ids_tokenized.shape[1]:], skip_special_tokens=True)
+
+            full_generation.append(pred)
             predicted_strings.append(pred)
             # print("PRED COMPUTED")
             # print(pred)
@@ -271,6 +289,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
     result = get_scores_from_preds(predictions_test, labels_test)
     result["predicted_strings"] = predicted_strings
     result["labels_strings"] = labels_strings
+    result["full_generation"] = full_generation
 
     return result
 
@@ -360,6 +379,7 @@ def log_test(model,
             print("Wrong dictionary format")
             print(k)
             print(v)
+    print("Test log completed")
     return log_test
 
 def validate_model(model, validation_loader, device, world_size, local_rank, mode=None):
