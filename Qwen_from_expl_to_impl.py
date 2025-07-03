@@ -3,7 +3,6 @@
 
 import pandas as pd 
 import numpy as np 
-from pandas.core.base import NoNewAttributesMixin
 import seaborn as sns 
 import matplotlib.pyplot as plt 
 import os 
@@ -14,9 +13,9 @@ from pprint import pprint as pp
 from dotenv import load_dotenv
 from datetime import date
 import re
-import tqdm
+from tqdm.auto import tqdm
 import emoji
-import os
+import json
 from huggingface_hub import whoami, HfFolder
 
 import gc
@@ -154,7 +153,7 @@ def test_model(model, tokenizer, base_prompt, ds, mode=None, verbose=False):
     model.eval()
     with torch.no_grad():
         
-        for i, test_item in enumerate(ds["test"]):
+        for i, test_item in enumerate(tqdm(ds["test"])):
 
             target_label = test_item["label"]
 
@@ -551,7 +550,7 @@ def main(
         cl_params = "N/A"
         hyper_param_str = "N/A"
 
-    n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
     
     print("_________________________________")
@@ -559,7 +558,7 @@ def main(
     print()
 
     # for task in tasks/dataset - train, eval
-    for epoch in range(n_epochs):
+    for epoch in tqdm(range(n_epochs)):
 
         torch.cuda.empty_cache()
         gc.collect()
@@ -630,7 +629,7 @@ def main(
         print("Final Validation Losses:", global_validation_losses)
 
     if local_rank == 0:
-        log_test = log_test(model=model,
+        test_result = log_test(model=model,
                             model_id=model_id,
                             test_ds=hf_time_1,
                             type_experiment=type_experiment,
@@ -647,7 +646,7 @@ def main(
                             exp_setup=exp_setup,
                             hyper_param_str=hyper_param_str,
                             metrics=[f1_score, precision_score, recall_score, roc_auc_score])
-        print(log_test)
+        print(test_result)
 
 
     if local_rank==0:
