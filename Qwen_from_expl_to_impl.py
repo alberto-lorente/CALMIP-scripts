@@ -487,7 +487,7 @@ def train(  model,
             # print(batch["labels"].shape)
 
             output = model.module.model(**batch)
-            print(output)
+            # print(output)
             logits = output.logits
             # print("Shape Logits")
             # print(logits.shape)
