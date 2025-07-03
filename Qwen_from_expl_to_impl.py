@@ -347,11 +347,7 @@ def log_test(model,
 
     for k, v in log_test.items():
         if type(v) not in [int, float, str, list]:
-            try:
-                log_test[k] = float(v)
-            except:
-                log_test[k] = str(v)
-
+            print("wrong dictionary format")
     return log_test
 
 def validate_model(model, validation_loader, device, world_size, local_rank, mode=None):
@@ -547,7 +543,7 @@ def train(  model,
         print(train_val_log)
         # print(model)
 
-        return model, tests_results, train_val_log 
+    return model, tests_results, train_val_log 
 
 def continual_training(model,
                         model_id,
@@ -664,8 +660,8 @@ def continual_training(model,
                                             local_rank=local_rank,
                                             metrics=metrics, 
                                             mode=mode)
-        test_results.extend(tests)
-        train_results.extend(train_vals)
+        test_results.append(tests)
+        train_results.append(train_vals)
 
         print("RESULTS FOR CURRENT EXPERIENCE DONE")
         print(tests)
