@@ -295,7 +295,7 @@ def log_test(model,
 
     return log_test
 
-def validate_model(model, validation_loader, device, mode=None):
+def validate_model(model, validation_loader, device, world_size, mode=None):
 
     model.eval()
     with torch.no_grad():
@@ -618,7 +618,7 @@ def main(
             print(f"Epoch {epoch} Loss: {epoch_loss_tensor.item()}")
             global_training_losses.append(epoch_loss_tensor.item())
 
-        val_loss = validate_model(model, hf_time_1_validation_loader, device)
+        val_loss = validate_model(model, hf_time_1_validation_loader, device, world_size)
         global_validation_losses.append(val_loss)
 
     print()
