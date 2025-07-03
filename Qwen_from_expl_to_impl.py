@@ -149,18 +149,22 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
 
     predictions_test = []
     labels_test = []
+    predicted_strings = []
+    labels_strings = []
 
     model.eval()
     with torch.no_grad():
-        print("TESTING DS")
-        print(ds)
-        print()
-        for i, test_item in enumerate(ds["test"]):
-            print(test_item)
-            print(i)
+        # print("TESTING DS")
+        # print(ds)
+        # print()
+        # for i, test_item in enumerate(ds["test"]):
+        for i, test_item in enumerate(ds):
+            # print(test_item)
+            # print(i)
             target_label = test_item["label"]
-            print("TARGET LABEL")
-            print(target_label)
+            labels_strings.append(target_label)
+            # print("TARGET LABEL")
+            # print(target_label)
             if target_label == "NOT HATEFUL":
                 target_label = 0
             elif target_label == "HATEFUL":
@@ -170,8 +174,8 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
 
             formatted_prompt = test_item["formatted_prompt"]
             # prompt_plus_messages = base_prompt.format(clean_post)
-            print("FORMATTED PROMPT")
-            print(formatted_prompt)
+            # print("FORMATTED PROMPT")
+            # print(formatted_prompt)
 
 
             messages = [
@@ -209,7 +213,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             #                                 temperature=0.6, 
             #                                 max_new_tokens=10,
             #                                 return_dict_in_generate=False))
-            print("----------------right after output---------------------------------------")
+            # print("----------------right after output---------------------------------------")
             output = model.module.generate(input_ids=input_ids_tokenized, 
                                             attention_mask=attention_mask, 
                                             top_p=0.9, 
@@ -218,17 +222,18 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                                             return_dict_in_generate=False)
                     
             # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
-            print("OUTPUT COMPUTED")
-            print(output)
-            print(type(output))
+            # print("OUTPUT COMPUTED")
+            # print(output)
+            # print(type(output))
             seq = output[0]
-            print(tokenizer.decode(seq, skip_special_tokens=True).strip())
+            # print(tokenizer.decode(seq, skip_special_tokens=True).strip())
             pred = tokenizer.decode(seq[input_ids_tokenized.shape[1]:], skip_special_tokens=True).strip()
-            print("PRED COMPUTED")
-            print(pred)
+            predicted_strings.append(pred)
+            # print("PRED COMPUTED")
+            # print(pred)
             pred_label = translate_prediction_to_label(pred)
-            print("PRED LABEL COMPUTED")
-            print(pred_label)
+            # print("PRED LABEL COMPUTED")
+            # print(pred_label)
             predictions_test.append(pred_label)
 
             if mode != None:
@@ -263,6 +268,8 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                 # print(labels_test)
 
     result = get_scores_from_preds(predictions_test, labels_test)
+    result["predicted_strings"] = predicted_strings
+    result["labels_strings"] = labels_strings
 
     return result
 
@@ -333,11 +340,12 @@ def log_test(model,
 
     else:
         log_test["shots"] = "PASSED TRAINING"
-    print("LOG TEST BEFORE CALCULATING THE SCORES")
-    print(log_test)
+    # print("LOG TEST BEFORE CALCULATING THE SCORES")
+    # print(log_test)
     # print(current_testing_dataset)
     try:
         test_metrics = test_model(model=model, tokenizer=tokenizer, base_prompt=base_prompt, ds=test_ds, mode=mode, verbose=False, device=device)
+        print("Testing for " + current_testing_dataset + " completed")
     except Exception as e:
         print("TESTING FAILED")
         print(e)
@@ -347,7 +355,9 @@ def log_test(model,
 
     for k, v in log_test.items():
         if type(v) not in [int, float, str, list]:
-            print("wrong dictionary format")
+            print("Wrong dictionary format")
+            print(k)
+            print(v)
     return log_test
 
 def validate_model(model, validation_loader, device, world_size, local_rank, mode=None):
@@ -383,7 +393,11 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
         val_loss_tensor /= world_size
 
         if local_rank == 0:
+            print("_________________________________")
+            print("Validation completed")
+            print()
             print(f"Validation Loss: {val_loss_tensor.item()}")
+            print("_________________________________")
 
     return val_loss_tensor.item()
 
@@ -500,7 +514,8 @@ def train(  model,
     if local_rank == 0:
         tests_results = []
         print(test_datasets)
-        for idx, test_loader in enumerate(test_datasets):
+        for idx, (test_data_name, test_loader) in enumerate(test_datasets.items()):
+            print("TESTING - " + test_data_name)
             print(test_loader)
             # print("-------------------------------------------------------")
             # print("fails here")
@@ -511,7 +526,7 @@ def train(  model,
                             cl_technique=cl_technique,
                             time=time,
                             current_training_dataset=training_order[time],
-                            current_testing_dataset=training_order[idx],
+                            current_testing_dataset=test_data_name,
                             training_order=training_order,
                             trainable_params=n_trainable_params,
                             epochs=n_epochs,
@@ -526,7 +541,8 @@ def train(  model,
                             base_prompt=base_prompt,
                             device=device)
             tests_results.append(test_result)
-            print(test_result)
+            # print(test_result)
+
         train_val_log = {"model_id": model_id,
                     "current_ds_training": training_order[time],
                     "epochs": int(n_epochs),
@@ -539,8 +555,8 @@ def train(  model,
                     "train_order": " -> ".join(training_order)
                     }
 
-        print(tests_results)
-        print(train_val_log)
+        # print(tests_results)
+        # print(train_val_log)
         # print(model)
 
     return model, tests_results, train_val_log 
@@ -553,6 +569,7 @@ def continual_training(model,
                         training_order,
                         testing_order,
                         hf_datasets,
+                        testing_datasets,
                         epochs_array,
                         ks_array,
                         n_samples_per_ds,
@@ -596,17 +613,17 @@ def continual_training(model,
     data_loaders_val = []
     test_datasets = []
     for time, ds in enumerate(training_order):
-        print("training order")
-        print(training_order)
-        print("ds")
-        print(ds)
-        print("hf_datasets")
-        print(hf_datasets[time].keys())
+        # print("training order")
+        # print(training_order)
+        # print("ds")
+        # print(ds)
+        # print("hf_datasets")
+        # print(hf_datasets[time].keys())
         data_loaders_train.append(hf_datasets[time][ds]["train"])
         data_loaders_val.append(hf_datasets[time][ds]["validation"])
         test_datasets.append({"test":hf_datasets[time]["test"]})
-    print("TEST DATASETS BEFORE STARTING THE EXPERIENCE")
-    print(test_datasets)
+    # print("TEST DATASETS BEFORE STARTING THE EXPERIENCE")
+    # print(test_datasets)
 
     test_results = []
     train_results = []
@@ -640,7 +657,7 @@ def continual_training(model,
                                             n_epochs=n_epochs, 
                                             train_loader=data_loaders_train[time], 
                                             validation_loader=data_loaders_val[time], 
-                                            test_datasets=test_datasets, # actually will have to be the full datasets since we are not using dataloaders but the whole ds and then doing df["test"]
+                                            test_datasets=testing_datasets, # actually will have to be the full datasets since we are not using dataloaders but the whole ds and then doing df["test"]
                                             type_experiment=type_experiment, 
                                             cl_technique=cl_technique, 
                                             time=time,
@@ -663,12 +680,12 @@ def continual_training(model,
         test_results.append(tests)
         train_results.append(train_vals)
 
-        print("RESULTS FOR CURRENT EXPERIENCE DONE")
-        print(tests)
-        print("TEST RESULTS")
-        print(test_results)
-        print("TRAIN RESULTS")
-        print(train_results)
+        # print("RESULTS FOR CURRENT EXPERIENCE DONE")
+        # print(tests)
+        # print("TEST RESULTS")
+        # print(test_results)
+        # print("TRAIN RESULTS")
+        # print(train_results)
 
         if mode != None:
             break
@@ -691,6 +708,7 @@ def main(
     type_experiment:str,
     cl_technique:str,
     training_order:list,
+    testing_order:list,
     model_id = "Models/Qwen2.5-0.5B",
     batch_size = 4,
     n_epochs = 2,
@@ -776,12 +794,12 @@ def main(
     times_array = list(df["time"].unique())
     datasets = []
     dataset_names = list(df["task"].unique())
-    print("times_array")
-    print(times_array)
-    print("dataset_names")
-    print(dataset_names)
-    print("Actual training_order")
-    print(training_order)
+    # print("times_array")
+    # print(times_array)
+    # print("dataset_names")
+    # print(dataset_names)
+    # print("Actual training_order")
+    # print(training_order)
 
     for task in training_order:
         print("Task")
@@ -793,6 +811,15 @@ def main(
             hf_split = Dataset.from_pandas(split_df)
             time_ds.append(hf_split)
         datasets.append(time_ds)
+
+    datasets_test = []
+    for i, task in enumerate(testing_order):
+        print("Task")
+        print(task)
+        split_df = df[(df["split"] == "test") & (df["task"] == task)]
+        hf_split = Dataset.from_pandas(split_df)
+        datasets_test.append({testing_order[i]: hf_split})
+
 
     hf_datasets = []
 
@@ -820,9 +847,9 @@ def main(
         for task_name, hf_time in hf_data.items() 
     ]
 
-    print("hf_datasets_processed")
-    print(hf_datasets_processed)
-    print()
+    # print("hf_datasets_processed")
+    # print(hf_datasets_processed)
+    # print()
     for ds in hf_datasets_processed:
         for task_name, hf_data in ds.items():
             for split in hf_data:
@@ -843,48 +870,31 @@ def main(
                     ds_dict[task_name][split] = hf_data[split].remove_columns(cols_to_remove)
         hf_datasets_no_cols.append(ds_dict)
 
-    # hf_datasets = [
-    #     {task_name: {split: hf_time[split].remove_columns(cols_to_remove)}}
-    #     for hf_data in hf_datasets
-    #     for task_name, hf_time in hf_data.items()
-    #     for split in hf_time 
-    #     if split != "test"]
-
-    print("hf_datasets before data collator:")
-    print(hf_datasets)
-    print()
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
-
-    # distributed_samplers = [
-    #     {task_name: {split: DistributedSampler(hf_time[split], num_replicas=world_size, rank=local_rank, shuffle=False)}}
-    #     for hf_data in hf_datasets
-    #     for task_name, hf_time in hf_data.items()
-    #     for split in hf_time 
-    #     if split != "test"
-    # ]
 
     distributed_samplers = []
     for ds in hf_datasets_no_cols:
         ds_dict = {}
-        print("ds:")
-        print(ds)
+        # print("ds:")
+        # print(ds)
         for task_name, hf_data in ds.items():
-            print("task_name:")
-            print(task_name)
-            print("hf_data:")
-            print(hf_data)
+            # print("task_name:")
+            # print(task_name)
+            # print("hf_data:")
+            # print(hf_data)
             ds_dict[task_name] = {}
             for split in hf_data:
-                print("split:")
-                print(split)
+                # print("split:")
+                # print(split)
                 if split != "test":
                    distr_sampler = DistributedSampler(hf_data[split], num_replicas=world_size, rank=local_rank, shuffle=False)
                    ds_dict[task_name][split] = distr_sampler
+
         distributed_samplers.append(ds_dict)
 
-    print("distributed_samplers")
-    print(distributed_samplers)
-    print()
+    # print("distributed_samplers")
+    # print(distributed_samplers)
+    # print()
 
     data_loaders = []
     for i, distr_sampler in enumerate(distributed_samplers):
@@ -902,17 +912,19 @@ def main(
                 if split == "test":
                     data_loaders[i]["test"] = hf_data[split]
 
-    print("data_loaders")
-    print(data_loaders)
+    print("DATA LOADERS AT THE END OF PROCESSING")
+    pp(data_loaders)
     print()
-
+    print("Test Data")
+    pp(datasets_test)
+    print()
 
     # ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
 
     ########################3#################### MODEL WORK
 
     print("_________________________________")
-    print("Loading the model and model config")
+    print("Loading the model and model config with LoRA and 4-bit quantization nf4")
 
     bnb_config = BitsAndBytesConfig(  
                                     load_in_4bit= True,
@@ -983,12 +995,13 @@ def main(
     
     print("_________________________________")
 
-    testing_order = training_order
     hf_datasets = data_loaders
 
     epochs_array = []
+
     for i in range(len(training_order)):
         epochs_array.append(n_epochs)
+
     ks_array = None
 
     model, test_results, train_results = continual_training(model=model,
@@ -1000,6 +1013,7 @@ def main(
                                                         training_order=training_order,
                                                         testing_order=testing_order,
                                                         hf_datasets=hf_datasets,
+                                                        testing_datasets=datasets_test,
                                                         epochs_array=epochs_array,
                                                         ks_array=ks_array,
                                                         n_samples_per_ds=n_samples_per_ds,
@@ -1026,12 +1040,14 @@ def main(
         try:
             with open(experiment_json_name, "w") as f:
                 json.dump(test_results, f, indent=4)
+            print("Results saved successfully")
         except Exception as e:
             print("Result couldn't be saved.")
             print(e)
         try:
             with open("train_log-" + experiment_json_name, "w") as f:
                 json.dump(train_results, f, indent=4)
+            print("Train Log saved successfully")
         except Exception as e:
             print("Train Log couldn't be saved.")
             print(e)
@@ -1045,18 +1061,59 @@ def main(
         tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
+    print()
+    print()
+    print("_________________________________")
+    print()
+    print(experiment_json_name.replace(".json", "") + " DONE")
+    print()
+    print("_________________________________")
+    print()
 
 if __name__ == "__main__":
+
     main(
         type_experiment="from_expl_to_impl",
         cl_technique="vainilla_finetune",
         model_id = "Models/Qwen2.5-0.5B",
         training_order=["explicit_hs", "implicit_hs"],
+        testing_order=["explicit_hs", "implicit_hs"],
         batch_size = 4,
         n_epochs = 8,
         lr = 1e-5,
         lora_r = 8,
         exp_setup = exp_setup,
-        mode = "test",
+        mode = None,
+        dataset_path="df_from_exp_to_imp.csv",
+        )
+
+
+    main(
+        type_experiment="explicit",
+        cl_technique="vainilla_finetune",
+        model_id = "Models/Qwen2.5-0.5B",
+        training_order=["explicit_hs"],
+        testing_order=["explicit_hs", "implicit_hs"],
+        batch_size = 4,
+        n_epochs = 8,
+        lr = 1e-5,
+        lora_r = 8,
+        exp_setup = exp_setup,
+        mode = None,
+        dataset_path="df_from_exp_to_imp.csv",
+        )
+
+    main(
+        type_experiment="implicit",
+        cl_technique="vainilla_finetune",
+        model_id = "Models/Qwen2.5-0.5B",
+        training_order=["implicit_hs"],
+        testing_order=["explicit_hs", "implicit_hs"],
+        batch_size = 4,
+        n_epochs = 8,
+        lr = 1e-5,
+        lora_r = 8,
+        exp_setup = exp_setup,
+        mode = None,
         dataset_path="df_from_exp_to_imp.csv",
         )
