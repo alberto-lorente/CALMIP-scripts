@@ -828,7 +828,7 @@ class CLTechniques:
             for inputs_mem, labels_mem in self.memory:
                 outputs = self.model(**inputs_mem, labels=labels_mem)
                 outputs.loss.backward()
-            self.ref_grad = [p.grad.clone() for p in self.model.parameters()] # i think this should be with req grad
+            self.ref_grad = [p.grad.clone() for p in self.model.parameters() if p.requires_grad] # i think this should be with req grad
             self.model.zero_grad()
 
     def post_backward(self):
@@ -836,12 +836,12 @@ class CLTechniques:
         if self.technique == "agem" and hasattr(self, 'ref_grad'):
             # Project gradients
             dot_product = sum(torch.sum(p.grad * g_ref)
-                        for p, g_ref in zip(self.model.parameters(), self.ref_grad))
+                        for p, g_ref in zip(self.model.parameters(), self.ref_grad) if p.requires_grad)
             ref_norm = sum(torch.sum(g_ref * g_ref) for g_ref in self.ref_grad)
 
             if dot_product < 0:  # Negative interference
                 scale = dot_product / (ref_norm + 1e-8)
-                for p, g_ref in zip(self.model.parameters(), self.ref_grad):
+                for p, g_ref in zip(self.model.parameters(), self.ref_grad if p.requires_grad):
                     if p.grad is not None:
                         p.grad -= scale * g_ref
 
@@ -1206,7 +1206,7 @@ def main(
         cl_params = "NA"
         hyper_param_str = "NA"
 
-    model = AutoContinualLearner(model_id, device, bnb_config)
+    model = AutoContinualLearner(model_id + "/Model", device, bnb_config)
     model.init_cl(technique=cl_technique, lora_config=config, **cl_params)
 
     model = DDP(model, 
