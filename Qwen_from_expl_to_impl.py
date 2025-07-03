@@ -175,8 +175,8 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
         # print()
         # for i, test_item in enumerate(ds["test"]):
         for i, test_item in enumerate(ds):
-            print("TESTING ITEM")
-            print(test_item)
+            # print("TESTING ITEM")
+            # print(test_item)
             # print(i)
             target_label = test_item["label"]
             labels_strings.append(target_label)
@@ -581,6 +581,8 @@ def train(  model,
                     "train_order": " -> ".join(training_order)
                     }
 
+
+
         # print(tests_results)
         # print(train_val_log)
         # print(model)
@@ -703,8 +705,9 @@ def continual_training(model,
                                             local_rank=local_rank,
                                             metrics=metrics, 
                                             mode=mode)
-        test_results.append(tests)
-        train_results.append(train_vals)
+        if local_rank == 0:
+            test_results.append(tests)
+            train_results.append(train_vals)
 
         # print("RESULTS FOR CURRENT EXPERIENCE DONE")
         # print(tests)
@@ -828,8 +831,8 @@ def main(
     # print(training_order)
 
     for task in training_order:
-        print("Task")
-        print(task)
+        # print("Task")
+        # print(task)
         time_ds = []
         for split in df["split"].unique():
 
@@ -941,7 +944,7 @@ def main(
     print("DATA LOADERS AT THE END OF PROCESSING")
     pp(data_loaders)
     print()
-    print("Test Data")
+    print("TEST DATA AT THE END OF PROCESSING")
     pp(datasets_test)
     print()
 
@@ -1098,20 +1101,20 @@ def main(
 
 if __name__ == "__main__":
 
-    # main(
-    #     type_experiment="from_expl_to_impl",
-    #     cl_technique="vainilla_finetune",
-    #     model_id = "Models/Qwen2.5-0.5B",
-    #     training_order=["explicit_hs", "implicit_hs"],
-    #     testing_order=["explicit_hs", "implicit_hs"],
-    #     batch_size = 4,
-    #     n_epochs = 8,
-    #     lr = 1e-5,
-    #     lora_r = 8,
-    #     exp_setup = exp_setup,
-    #     mode = "test",
-    #     dataset_path="df_from_exp_to_imp.csv",
-    #     )
+    main(
+        type_experiment="from_expl_to_impl",
+        cl_technique="vainilla_finetune",
+        model_id = "Models/Qwen2.5-0.5B",
+        training_order=["explicit_hs", "implicit_hs"],
+        testing_order=["explicit_hs", "implicit_hs"],
+        batch_size = 4,
+        n_epochs = 8,
+        lr = 1e-5,
+        lora_r = 8,
+        exp_setup = exp_setup,
+        mode = "test",
+        dataset_path="df_from_exp_to_imp.csv",
+        )
 
 
     main(
@@ -1129,17 +1132,17 @@ if __name__ == "__main__":
         dataset_path="df_from_exp_to_imp.csv",
         )
 
-    # main(
-    #     type_experiment="implicit",
-    #     cl_technique="vainilla_finetune",
-    #     model_id = "Models/Qwen2.5-0.5B",
-    #     training_order=["implicit_hs"],
-    #     testing_order=["explicit_hs", "implicit_hs"],
-    #     batch_size = 4,
-    #     n_epochs = 8,
-    #     lr = 1e-5,
-    #     lora_r = 8,
-    #     exp_setup = exp_setup,
-    #     mode = "test",
-    #     dataset_path="df_from_exp_to_imp.csv",
-    #     )
+    main(
+        type_experiment="implicit",
+        cl_technique="vainilla_finetune",
+        model_id = "Models/Qwen2.5-0.5B",
+        training_order=["implicit_hs"],
+        testing_order=["explicit_hs", "implicit_hs"],
+        batch_size = 4,
+        n_epochs = 8,
+        lr = 1e-5,
+        lora_r = 8,
+        exp_setup = exp_setup,
+        mode = "test",
+        dataset_path="df_from_exp_to_imp.csv",
+        )
