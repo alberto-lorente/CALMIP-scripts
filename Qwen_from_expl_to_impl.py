@@ -23,6 +23,7 @@ import gc
 import torch
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
+import torch.nn as nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
 from torch.nn import CrossEntropyLoss, Softmax
