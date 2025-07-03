@@ -721,10 +721,16 @@ def main(
     times_array = list(df["time"].unique())
     datasets = []
     dataset_names = list(df["task"].unique())
+    print("times_array")
+    print(times_array)
+    print("dataset_names")
     print(dataset_names)
+    print("Actual training_order")
+    print(training_order)
 
     for task in training_order:
-
+        print("Task")
+        print(task)
         time_ds = []
         for split in df["split"].unique():
 
@@ -736,11 +742,12 @@ def main(
     hf_datasets = []
 
     for i, dataset in enumerate(datasets):
-
+        print("dataset")
+    
         hf_ds = DatasetDict({dataset[0]["split"][0]: dataset[0], 
                             dataset[1]["split"][0]: dataset[1],
                             dataset[2]["split"][0]: dataset[2]})
-        hf_ds_name = dataset_names[i]
+        hf_ds_name = training_order[i]
         hf_datasets.append({hf_ds_name: hf_ds})
 
     hf_datasets_processed = []
