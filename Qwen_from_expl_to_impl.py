@@ -502,7 +502,7 @@ def train(  model,
                 batch['logits'] = logits  # needed for LwF
                 loss += model.module.cl.compute_regularization(batch)
                 model.module.cl.pre_backward(batch)
-
+            print("CL regularization and backward computed")
 
             loss.backward()
 
@@ -510,6 +510,7 @@ def train(  model,
             # needed agem (A-GEM)
             if model.module.cl:
                 model.module.cl.post_backward()
+            print("CL post backward computed")
 
             optimizer.step()
             optimizer.zero_grad()
@@ -863,7 +864,9 @@ class CLTechniques:
                         if k in ['input_ids', 'attention_mask']}
                 labels = batch['labels'].to(self.device)
 
-                outputs = self.model(**inputs, labels=labels)
+                # outputs = self.model(**inputs, labels=labels)
+                outputs = self.model(**inputs)
+
                 loss = loss_f(outputs.logits, labels)
                 loss.backward()
 
