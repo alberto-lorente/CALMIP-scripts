@@ -455,7 +455,9 @@ def train(  model,
 
     if local_rank == 0:
         tests = []
+        print(test_datasets)
         for idx, test_loader in enumerate(test_datasets):
+            print(test_loader)
             test_result = log_test(model=model,
                             model_id=model_id,
                             test_ds=test_loader,
@@ -491,7 +493,7 @@ def train(  model,
                     "train_order": " -> ".join(training_order)
                     }
 
-        print(tests)
+        # print(tests)
 
     return model, tests, train_val_log 
 
