@@ -825,6 +825,12 @@ def main(
             data_loader = DataLoader(hf_datasets_no_cols[i][ds_name][split], collate_fn=data_collator, batch_size=batch_size, sampler=distributed_sampler)
             ds_dict[ds_name][split] = data_loader
         data_loaders.append(ds_dict)
+    
+    for i, ds in enumerate(hf_datasets):
+        for task_name, hf_data in ds.items():
+            for split in hf_data:
+                if split == "test":
+                    data_loaders[i]["test"] = hf_data[split]
 
     print("data_loaders")
     print(data_loaders)
@@ -910,8 +916,9 @@ def main(
     testing_order = dataset_names
     training_order = dataset_names
     hf_datasets = data_loaders
+
     epochs_array = []
-    for i in range(epochs):
+    for i in range(n_epochs):
         epochs_array.append(n_epochs)
     ks_array = None
 
