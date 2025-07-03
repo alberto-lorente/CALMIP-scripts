@@ -764,13 +764,32 @@ def main(
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-    distributed_samplers = [
-        {task_name: {split: DistributedSampler(hf_time[split], num_replicas=world_size, rank=local_rank, shuffle=False)}}
-        for hf_data in hf_datasets
-        for task_name, hf_time in hf_data.items()
-        for split in hf_time 
-        if split != "test"
-    ]
+    # distributed_samplers = [
+    #     {task_name: {split: DistributedSampler(hf_time[split], num_replicas=world_size, rank=local_rank, shuffle=False)}}
+    #     for hf_data in hf_datasets
+    #     for task_name, hf_time in hf_data.items()
+    #     for split in hf_time 
+    #     if split != "test"
+    # ]
+
+    dsitr_samplers = []
+    for ds in hf_datasets:
+        ds_dict = {}
+        print("ds:")
+        print(ds)
+        for task_name, hf_data in ds.items():
+            print("task_name:")
+            print(task_name)
+            print("hf_data:")
+            print(hf_data)
+            ds_dict[task_name] = {}
+            for split in hf_data:
+                print("split:")
+                print(split)
+                if split != "test":
+                   distr_sampler = DistributedSampler(hf_data[split], num_replicas=world_size, rank=local_rank, shuffle=False)
+                   ds_dict[task_name][split] = distr_sampler
+            dsitr_samplers.append(ds_dict)
 
     data_loaders = []
     for i, distr_sampler in enumerate(distributed_samplers):
