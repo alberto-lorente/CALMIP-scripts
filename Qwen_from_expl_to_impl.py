@@ -152,9 +152,12 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
 
     model.eval()
     with torch.no_grad():
-        
+        print("TESTING DS")
+        print(ds)
+        print()
         for i, test_item in enumerate(tqdm(ds["test"])):
             print(test_item)
+            print(i)
             target_label = test_item["label"]
 
             if target_label == "NOT HATEFUL":
@@ -275,6 +278,7 @@ def log_test(model,
     log_test["num_samples"] =                  num_samples
     log_test["hyper_param"] =                  hyper_param_str
 
+    
     if current_testing_dataset == current_training_dataset:
         log_test["shots"] = "IN TRAINING"
 
@@ -283,7 +287,8 @@ def log_test(model,
 
     else:
         log_test["shots"] = "PASSED TRAINING"
-
+    print("LOG TEST BEFORE CALCULATING THE SCORES")
+    print(log_test)
     # print(current_testing_dataset)
     try:
         test_metrics = test_model(model, tokenizer, base_prompt, test_ds, mode=mode, verbose=False, device=device)
@@ -490,7 +495,9 @@ def train(  model,
                     "train_order": " -> ".join(training_order)
                     }
 
-        # print(tests)
+        print(tests_results)
+        print(train_val_log)
+        print(model)
 
         return model, tests_results, train_val_log 
 
