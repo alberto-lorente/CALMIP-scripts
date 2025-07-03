@@ -181,7 +181,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             print("CHAT TEMPLATE COMPUTED")
             print(chat_template)
-            input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)["input_ids"]
+            input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)["input_ids"].to(device)
             
             print("TOKENIZED CHAT TEMPLATE COMPUTED")
             print(input_ids_tokenized)
@@ -189,6 +189,8 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             if input_ids_tokenized.shape[0] == 1:
                 print("wrong size")
                 input_ids_tokenized = input_ids_tokenized.unsqueeze(0)
+            print("NEW SHAPE")
+            print(input_ids_tokenized.shape)
             ######################
             print("----------------right beforeoutput---------------------------------------")
             output = model.module.generate(input_ids_tokenized, top_p=90, temperature=0.6)
