@@ -181,8 +181,10 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             print("CHAT TEMPLATE COMPUTED")
             print(chat_template)
-            input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)["input_ids"].to(device)
-            attention_mask = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)["attention_mask"].to(device)
+            input_dict = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False)
+            input_dict = {k: v.to(device) for k, v in input_dict.items()}
+            input_ids_tokenized = input_dict["input_ids"]
+            attention_mask = input_dict["attention_mask"]
             
             print("TOKENIZED CHAT TEMPLATE COMPUTED")
             print(input_ids_tokenized)
@@ -200,8 +202,21 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             # print(model.module)
             # print(dir(model))
             # print(dir(model.module))
-            print(help(model.module.generate))
-            output = model.module.generate(input_ids=input_ids_tokenized, attention_mask=attention_mask, top_p=0.9, temperature=0.6)
+            # print(help(model.module.generate))
+            print(model.module.generate(input_ids=input_ids_tokenized, 
+                                            attention_mask=attention_mask, 
+                                            top_p=0.9, 
+                                            temperature=0.6, 
+                                            max_new_tokens=10,
+                                            return_dict_in_generate=False))
+            print("----------------right after output---------------------------------------")
+            output = model.module.generate(input_ids=input_ids_tokenized, 
+                                            attention_mask=attention_mask, 
+                                            top_p=0.9, 
+                                            temperature=0.6, 
+                                            max_new_tokens=10,
+                                            return_dict_in_generate=False)
+                    
             # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
             print("OUTPUT COMPUTED")
             print(output)
