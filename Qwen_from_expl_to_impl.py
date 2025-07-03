@@ -493,7 +493,19 @@ def train(  model,
             # print(batch["labels"].shape)
             loss = loss_f(logits, batch["labels"])
 
+            if model.cl:
+                batch['logits'] = outputs.logits  # needed for LwF
+                loss += model.cl.compute_regularization(batch)
+                model.cl.pre_backward(batch)
+
+
             loss.backward()
+
+
+            # needed agem (A-GEM)
+            if model.cl:
+                model.cl.post_backward()
+
             optimizer.step()
             optimizer.zero_grad()
 
@@ -532,6 +544,12 @@ def train(  model,
         print("---------------------TRAINING ENDED---------------")
         print("Final Training Losses:", global_training_losses)
         print("Final Validation Losses:", global_validation_losses)
+
+    if model.cl:
+        model.cl.post_task_update(train_loader)
+
+    print("-----------POST TRAINING CL UPDATES COMPLETED---------")
+
 
     tests_results = []
     train_val_log = {}
@@ -720,6 +738,185 @@ def continual_training(model,
             break
 
     return model, test_results, train_results
+
+class CLTechniques:
+    """Container for all continual learning techniques"""
+
+    def __init__(self, model, device, technique="none",
+                ewc_lambda=1000,
+                mem_size=100,
+                lwf_lambda=1,
+                temperature=2,
+                mas_lambda=1000):
+
+        self.model = model
+        self.device = device
+        self.technique = technique.lower()
+
+        # Initialize selected technique
+        if self.technique == "ewc":
+            self._init_ewc(ewc_lambda)
+        elif self.technique == "agem":
+            self._init_agem(mem_size)
+        elif self.technique == "lwf":
+            self._init_lwf(lwf_lambda, temperature)
+        elif self.technique == "mas":
+            self._init_mas(mas_lambda)
+
+    def _init_ewc(self, ewc_lambda):
+        """Elastic Weight Consolidation"""
+        self.ewc_lambda = ewc_lambda
+        self.params = {n: p.clone().detach()
+                    for n, p in self.model.named_parameters()
+                    if p.requires_grad}
+        self.fisher = {n: torch.zeros_like(p)
+                    for n, p in self.model.named_parameters()
+                    if p.requires_grad}
+
+    def _init_agem(self, mem_size):
+        """Average Gradient Episodic Memory"""
+        self.mem_size = mem_size
+        self.memory = []
+
+    def _init_lwf(self, lwf_lambda, temperature):
+        """Learning Without Forgetting"""
+        self.lwf_lambda = lwf_lambda
+        self.temperature = temperature
+        self.old_model = None
+
+    def _init_mas(self, mas_lambda):
+        """Memory Aware Synapses"""
+        self.mas_lambda = mas_lambda
+        self.importance = {n: torch.zeros_like(p)
+                        for n, p in self.model.named_parameters()
+                        if p.requires_grad}
+        self.old_params = deepcopy(self.importance)
+
+    def compute_regularization(self, inputs=None):
+        """Compute CL regularization term"""
+        if self.technique == "ewc":
+            penalty = 0
+            for n, p in self.model.named_parameters():
+                if p.requires_grad:
+                    penalty += (self.fisher[n] * (p - self.params[n]).pow(2)).sum()
+            return self.ewc_lambda * penalty
+
+        elif self.technique == "lwf" and self.old_model:
+            with torch.no_grad():
+                logits = inputs['logits']
+                actual_inputs = {k:v for k,v in inputs.items() if k != "logits"}
+                old_outputs = self.old_model(**actual_inputs)
+            return self.lwf_lambda * KLDivLoss(reduction='batchmean')(
+                torch.log_softmax(logits/self.temperature, dim=1),
+                torch.softmax(old_outputs.logits/self.temperature, dim=1)
+            ) * (self.temperature ** 2)
+
+        elif self.technique == "mas":
+            penalty = 0
+            for n, p in self.model.named_parameters():
+                if p.requires_grad:
+                    penalty += (self.importance[n] * (p - self.old_params[n]).pow(2)).sum()
+            return self.mas_lambda * penalty
+
+        return 0
+
+    def pre_backward(self, inputs=None):
+        """Operations before backward pass"""
+        if self.technique == "agem" and self.memory:
+            # Store current gradient
+            self.model.zero_grad()
+            for inputs_mem, labels_mem in self.memory:
+                outputs = self.model(**inputs_mem, labels=labels_mem)
+                outputs.loss.backward()
+            self.ref_grad = [p.grad.clone() for p in self.model.parameters()] # i think this should be with req grad
+            self.model.zero_grad()
+
+    def post_backward(self):
+        """Operations after backward pass"""
+        if self.technique == "agem" and hasattr(self, 'ref_grad'):
+            # Project gradients
+            dot_product = sum(torch.sum(p.grad * g_ref)
+                        for p, g_ref in zip(self.model.parameters(), self.ref_grad))
+            ref_norm = sum(torch.sum(g_ref * g_ref) for g_ref in self.ref_grad)
+
+            if dot_product < 0:  # Negative interference
+                scale = dot_product / (ref_norm + 1e-8)
+                for p, g_ref in zip(self.model.parameters(), self.ref_grad):
+                    if p.grad is not None:
+                        p.grad -= scale * g_ref
+
+    def post_task_update(self, dataloader=None):
+        """Update after each task"""
+        if self.technique == "ewc":
+            # Compute Fisher information
+            self.model.eval()
+            for batch in dataloader:
+                self.model.zero_grad()
+                inputs = {k: v.to(self.device) for k, v in batch.items()
+                        if k in ['input_ids', 'attention_mask']}
+                labels = batch['labels'].to(self.device)
+
+                outputs = self.model(**inputs, labels=labels)
+                outputs.loss.backward()
+
+                for n, p in self.model.named_parameters():
+                    if p.requires_grad and p.grad is not None:
+                        self.fisher[n] += p.grad.pow(2) / len(dataloader)
+
+            # Update stored parameters
+            self.params = {n: p.clone().detach()
+                        for n, p in self.model.named_parameters()
+                        if p.requires_grad}
+
+        elif self.technique == "agem":
+            # Update memory buffer
+            self.memory = []
+            for batch in dataloader:
+                inputs = {k: v.to(self.device) for k, v in batch.items()
+                        if k in ['input_ids', 'attention_mask']}
+                labels = batch['labels'].to(self.device)
+                self.memory.append((inputs, labels))
+                if len(self.memory) >= self.mem_size:
+                    break
+
+        elif self.technique == "lwf":
+            # Save model snapshot
+            self.old_model = deepcopy(self.model)
+            self.old_model.eval()
+
+        elif self.technique == "mas":
+            # Update importance weights
+            self.model.eval()
+            for batch in dataloader:
+                self.model.zero_grad()
+                inputs = {k: v.to(self.device) for k, v in batch.items()
+                        if k in ['input_ids', 'attention_mask']}
+
+                outputs = self.model(**inputs)
+                torch.norm(outputs.logits, p=2, dim=1).mean().backward()
+
+                for n, p in self.model.named_parameters():
+                    if p.requires_grad and p.grad is not None:
+                        self.importance[n] += p.grad.abs() / len(dataloader)
+
+            # Update stored parameters
+            self.old_params = {n: p.clone().detach()
+                            for n, p in self.model.named_parameters()
+                            if p.requires_grad}
+
+class AutoContinualLearner:
+    def __init__(self, model_name, num_labels=2, device=device):
+        self.device = device
+        # self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            model_name,
+            num_labels=num_labels
+        ).to(self.device)
+        self.cl = None
+
+    def init_cl(self, technique, **kwargs):
+        """Initialize continual learning technique"""
+        self.cl = CLTechniques(self.model, self.device, technique, **kwargs)
 
 
 with open("llm_experiments_set_up.json", "r") as f:
@@ -990,19 +1187,6 @@ def main(
     print("Model After LoRA")
     model.print_trainable_parameters()
 
-
-    # so that i can use 2 gpus
-    model.to(device)
-
-    # init cl model here
-    
-    model = DDP(model, 
-                device_ids=[local_rank], 
-                output_device=local_rank, 
-                # find_unused_parameters=True
-                )
-    # print(model)
-    # print()
     if cl_technique in ["ewc", "agem", "lwf", "mas"]:
         cl_hyperparams = {
         "ewc": {"ewc_lambda":1500},
@@ -1019,8 +1203,23 @@ def main(
         cl_params = "NA"
         hyper_param_str = "NA"
 
-    n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
+    # so that i can use 2 gpus
+    model.to(device)
+
+    # init cl model here
+    model.init_cl(cl_technique, **cl_params)
+
+
+    model = DDP(model, 
+                device_ids=[local_rank], 
+                output_device=local_rank, 
+                # find_unused_parameters=True
+                )
+    # print(model)
+    # print()
+
+    n_trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad)
+    optimizer = AdamW((param for param in model.model.parameters() if param.requires_grad), lr=lr)
     
     print("_________________________________")
 
@@ -1033,7 +1232,7 @@ def main(
 
     ks_array = None
 
-    model, test_results, train_results = continual_training(model=model,
+    model, test_results, train_results = continual_training(model=model.model,
                                                         model_id=model_id,
                                                         tokenizer=tokenizer,
                                                         n_trainable_params=n_trainable_params,
@@ -1086,7 +1285,7 @@ def main(
         print("_________________________________")
         print("Saving the model and Tokenizer")
         model_name = model_id.split("/")[-1]
-        model.module.save_pretrained(f"alberto-lorente/{model_name}/model_test")
+        model.model.module.save_pretrained(f"alberto-lorente/{model_name}/model_test")
         tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
@@ -1109,7 +1308,7 @@ if __name__ == "__main__":
         testing_order=["explicit_hs", "implicit_hs"],
         batch_size = 4,
         n_epochs = 8,
-        lr = 1e-5,
+        lr = 1e-4,
         lora_r = 8,
         exp_setup = exp_setup,
         mode = "test",
@@ -1125,7 +1324,7 @@ if __name__ == "__main__":
         testing_order=["explicit_hs", "implicit_hs"],
         batch_size = 4,
         n_epochs = 8,
-        lr = 1e-5,
+        lr = 1e-4,
         lora_r = 8,
         exp_setup = exp_setup,
         mode = "test",
@@ -1140,7 +1339,7 @@ if __name__ == "__main__":
         testing_order=["explicit_hs", "implicit_hs"],
         batch_size = 4,
         n_epochs = 8,
-        lr = 1e-5,
+        lr = 1e-4,
         lora_r = 8,
         exp_setup = exp_setup,
         mode = "test",
