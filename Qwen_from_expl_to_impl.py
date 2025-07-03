@@ -201,7 +201,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             # print(dir(model))
             # print(dir(model.module))
             print(help(model.module.generate))
-            output = model.module.generate(input_ids=input_ids_tokenized, attention_mask=attention_mask, top_p=90, temperature=0.6)
+            output = model.module.generate(input_ids=input_ids_tokenized, attention_mask=attention_mask, top_p=0.9, temperature=0.6)
             # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
             print("OUTPUT COMPUTED")
             print(output)
