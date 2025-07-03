@@ -465,7 +465,7 @@ def train(  model,
 
         torch.cuda.empty_cache()
         gc.collect()
-        model.model.train()
+        model.train()
 
         epoch_validation_losses = []
         train_losses = []
@@ -1222,15 +1222,15 @@ def main(
                 # find_unused_parameters=True
                 )
 
-    print(model)
-    print(dir(model.module))
-    print(dir(model))
-    print(model.model.module)
+    # print(model)
+    # print(dir(model.module))
+    # print(dir(model))
+    print(dir(model.module.model))
     # print(model)
     # print()
 
-    n_trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad)
-    optimizer = AdamW((param for param in model.model.parameters() if param.requires_grad), lr=lr)
+    n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
     
     print("_________________________________")
 
