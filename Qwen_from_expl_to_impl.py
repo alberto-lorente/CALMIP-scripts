@@ -1083,7 +1083,7 @@ if __name__ == "__main__":
         lr = 1e-5,
         lora_r = 8,
         exp_setup = exp_setup,
-        mode = None,
+        mode = "test",
         dataset_path="df_from_exp_to_imp.csv",
         )
 
@@ -1099,7 +1099,7 @@ if __name__ == "__main__":
         lr = 1e-5,
         lora_r = 8,
         exp_setup = exp_setup,
-        mode = None,
+        mode = "test",
         dataset_path="df_from_exp_to_imp.csv",
         )
 
@@ -1114,6 +1114,6 @@ if __name__ == "__main__":
         lr = 1e-5,
         lora_r = 8,
         exp_setup = exp_setup,
-        mode = None,
+        mode = "test",
         dataset_path="df_from_exp_to_imp.csv",
         )
