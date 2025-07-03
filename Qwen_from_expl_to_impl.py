@@ -495,6 +495,8 @@ def train(  model,
             # print(batch["labels"].shape)
             loss = loss_f(logits, batch["labels"])
 
+            print(type(model.module))
+            print(dir(model.module))
             if model.module.cl:
                 batch['logits'] = logits  # needed for LwF
                 loss += model.module.cl.compute_regularization(batch)
@@ -1226,7 +1228,7 @@ def main(
     # print(model)
     # print(dir(model.module))
     # print(dir(model))
-    print(dir(model.module.model))
+    # print(dir(model.module.model))
     # print(model)
     # print()
 
