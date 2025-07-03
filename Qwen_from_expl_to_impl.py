@@ -630,7 +630,7 @@ np.random.seed(42)
 def main(
     type_experiment:str,
     cl_technique:str,
-    train_order:list,
+    training_order:list,
     model_id = "Models/Qwen2.5-0.5B",
     batch_size = 4,
     n_epochs = 2,
