@@ -510,8 +510,6 @@ OUTPUT AND FORMAT: your output should be just the label."""
         print("--------------------------------------------------")
         print("CHECKING GENERATION")
         print()
-        print(messages_list)
-        print()
         print(input_ids_tokenized)
         print()
         print("List predictions")
