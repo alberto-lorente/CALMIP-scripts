@@ -187,11 +187,16 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             print(input_ids_tokenized)
 
             ######################
-            output = model.module.generate(**input_ids_tokenized, top_p=90, temperature=0.6)
+            output = model.module.generate(input_ids_tokenized["input_ids"], top_p=90, temperature=0.6)
             # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
+            print("OUTPUT COMPUTED")
             print(output)
             pred = tokenizer.decode(output[0][input_ids_tokenized['input_ids'].shape[1]:], skip_special_tokens=True).strip()
+            print("PRED COMPUTED")
+            print(pred)
             pred_label = translate_prediction_to_label(pred)
+            print("PRED LABEL COMPUTED")
+            print(pred_label)
             predictions_test.append(pred_label)
 
             if mode != None:
