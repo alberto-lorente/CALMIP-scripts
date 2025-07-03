@@ -179,36 +179,36 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                 {"role": "user", "content": formatted_prompt}
             ]
             chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-            print("CHAT TEMPLATE COMPUTED")
-            print(chat_template)
+            # print("CHAT TEMPLATE COMPUTED")
+            # print(chat_template)
             input_dict = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False)
             input_dict = {k: v.to(device) for k, v in input_dict.items()}
             input_ids_tokenized = input_dict["input_ids"]
             attention_mask = input_dict["attention_mask"]
             
-            print("TOKENIZED CHAT TEMPLATE COMPUTED")
-            print(input_ids_tokenized)
-            print(type(input_ids_tokenized))
+            # print("TOKENIZED CHAT TEMPLATE COMPUTED")
+            # print(input_ids_tokenized)
+            # print(type(input_ids_tokenized))
             # if input_ids_tokenized.shape[0] == 1:
             #     print("wrong size")
             #     input_ids_tokenized = input_ids_tokenized.squeeze(0)
             #     attention_mask = attention_mask.squeeze(0)
-            print("NEW SHAPE")
-            print(input_ids_tokenized.shape)
-            print(attention_mask.shape)
-            ######################
-            print("----------------right beforeoutput---------------------------------------")
-            # print(model)
-            # print(model.module)
-            # print(dir(model))
-            # print(dir(model.module))
-            # print(help(model.module.generate))
-            print(model.module.generate(input_ids=input_ids_tokenized, 
-                                            attention_mask=attention_mask, 
-                                            top_p=0.9, 
-                                            temperature=0.6, 
-                                            max_new_tokens=10,
-                                            return_dict_in_generate=False))
+            # print("NEW SHAPE")
+            # print(input_ids_tokenized.shape)
+            # print(attention_mask.shape)
+            # ######################
+            # print("----------------right beforeoutput---------------------------------------")
+            # # print(model)
+            # # print(model.module)
+            # # print(dir(model))
+            # # print(dir(model.module))
+            # # print(help(model.module.generate))
+            # print(model.module.generate(input_ids=input_ids_tokenized, 
+            #                                 attention_mask=attention_mask, 
+            #                                 top_p=0.9, 
+            #                                 temperature=0.6, 
+            #                                 max_new_tokens=10,
+            #                                 return_dict_in_generate=False))
             print("----------------right after output---------------------------------------")
             output = model.module.generate(input_ids=input_ids_tokenized, 
                                             attention_mask=attention_mask, 
@@ -221,7 +221,9 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             print("OUTPUT COMPUTED")
             print(output)
             print(type(output))
-            pred = tokenizer.decode(output[0][input_ids_tokenized.shape[1]:], skip_special_tokens=True).strip()
+            seq = output[0]
+            print(tokenizer.decode(seq, skip_special_tokens=True).strip())
+            pred = tokenizer.decode(seq, skip_special_tokens=True).strip()
             print("PRED COMPUTED")
             print(pred)
             pred_label = translate_prediction_to_label(pred)
