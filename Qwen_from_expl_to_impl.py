@@ -750,9 +750,13 @@ def main(
         for task_name, hf_time in hf_data.items() 
     ]
 
+    print("hf_datasets_processed")
+    print(hf_datasets_processed)
+    print()
     for ds in hf_datasets_processed:
-        for hf_data in ds.values():
-            hf_data.set_format("torch")
+        for task_name, hf_data in ds.items():
+            for split in hf_data:
+                hf_data[split].set_format("torch")
 
     cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", 
                     "target", "implied_statement", "split", "time", "task",
