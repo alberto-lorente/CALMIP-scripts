@@ -905,17 +905,24 @@ class CLTechniques:
                             if p.requires_grad}
 
 class AutoContinualLearner:
-    def __init__(self, model_name, num_labels=2, device=device):
+    def __init__(self, model_name, device, quantization_config, torch_dtype=torch.bfloat16):
         self.device = device
         # self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(
+        self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            num_labels=num_labels
+            quantization_config=quantization_config,
+            torch_dtype=torch_dtype
         ).to(self.device)
+        self.n_initial_params = sum(t.numel() for t in self.model.parameters())
+        self.n_trainable_params_initial = sum(t.numel() for t in self.model.parameters() if t.requires_grad)
         self.cl = None
 
-    def init_cl(self, technique, **kwargs):
+    def init_cl(self, technique, lora_config, **kwargs):
         """Initialize continual learning technique"""
+        self.model = get_peft_model(self.model, lora_config)
+        self.n_params_lora = sum(t.numel() for t in self.model.parameters())
+        self.n_trainable_params_lora = sum(t.numel() for t in self.model.parameters() if t.requires_grad)
+        self.model.print_trainable_parameters()
         self.cl = CLTechniques(self.model, self.device, technique, **kwargs)
 
 
@@ -1159,17 +1166,17 @@ def main(
                                     bnb_4bit_use_double_quant= True,
                                 )
 
-    model = AutoModelForCausalLM.from_pretrained(model_id + "/Model",
-                                                torch_dtype=torch.bfloat16,
-                                                # device_map="auto",
-                                                quantization_config=bnb_config
-                                                )
+    # model = AutoModelForCausalLM.from_pretrained(model_id + "/Model",
+    #                                             torch_dtype=torch.bfloat16,
+    #                                             # device_map="auto",
+    #                                             quantization_config=bnb_config
+    #                                             )
 
     # to deal with the fact that we dont make the first token prediction??
 
 
-    model_size_before = sum(t.numel() for t in model.parameters())
-    print("Model Size before LoRA", model_size_before)
+    # model_size_before = sum(t.numel() for t in model.parameters())
+    # print("Model Size before LoRA", model_size_before)
     # print(model)
     # print()
 
@@ -1182,10 +1189,6 @@ def main(
         lora_dropout=0.1,
         bias="none",
     )
-
-    model = get_peft_model(model, config)
-    print("Model After LoRA")
-    model.print_trainable_parameters()
 
     if cl_technique in ["ewc", "agem", "lwf", "mas"]:
         cl_hyperparams = {
@@ -1203,12 +1206,8 @@ def main(
         cl_params = "NA"
         hyper_param_str = "NA"
 
-    # so that i can use 2 gpus
-    model.to(device)
-
-    # init cl model here
-    model.init_cl(cl_technique, **cl_params)
-
+    model = AutoContinualLearner(model_id, device, bnb_config)
+    model.init_cl(technique=cl_technique, lora_config=config, **cl_params)
 
     model = DDP(model, 
                 device_ids=[local_rank], 
