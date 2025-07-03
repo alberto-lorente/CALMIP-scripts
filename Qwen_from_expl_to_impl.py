@@ -251,6 +251,8 @@ def log_test(model,
         hyper_param_str,
         metrics=[f1_score, precision_score, recall_score, roc_auc_score],
         mode=None,
+        tokenizer=None,
+        base_prompt=None,
         ):
 
 
@@ -549,8 +551,8 @@ def main(
         hyper_param_str = "=".join([str(k) + "-" + str(v) for k, v in cl_params.items()])
 
     else:
-        cl_params = "N/A"
-        hyper_param_str = "N/A"
+        cl_params = "NA"
+        hyper_param_str = "NA"
 
     n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
@@ -651,7 +653,9 @@ def main(
                             exp_setup=exp_setup,
                             hyper_param_str=hyper_param_str,
                             metrics=[f1_score, precision_score, recall_score, roc_auc_score],
-                            mode=mode)
+                            mode=mode,
+                            tokenizer=tokenizer,
+                            base_prompt=base_prompt)
         print(test_result)
 
 
