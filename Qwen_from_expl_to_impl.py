@@ -486,7 +486,8 @@ def train(  model,
             # print(batch["attention_mask"].shape)
             # print(batch["labels"].shape)
 
-            output = model(**batch)
+            output = model.module.model(**batch)
+            print(output)
             logits = output.logits
             # print("Shape Logits")
             # print(logits.shape)
@@ -495,7 +496,7 @@ def train(  model,
             loss = loss_f(logits, batch["labels"])
 
             if model.module.cl:
-                batch['logits'] = outputs.logits  # needed for LwF
+                batch['logits'] = logits  # needed for LwF
                 loss += model.module.cl.compute_regularization(batch)
                 model.module.cl.pre_backward(batch)
 
