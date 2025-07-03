@@ -533,8 +533,9 @@ def train(  model,
         print("Final Training Losses:", global_training_losses)
         print("Final Validation Losses:", global_validation_losses)
 
+    tests_results = []
     if local_rank == 0:
-        tests_results = []
+        # tests_results = []
         print(test_datasets)
         for idx, test_ds in enumerate(test_datasets):
             test_data_name = str(list(test_ds.keys())[0])
