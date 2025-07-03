@@ -163,6 +163,7 @@ def test_model(model, tokenizer, base_prompt, ds, mode=None, verbose=False):
                 target_label = 1
             
             labels_test.append(target_label)
+
             clean_post = test_item["clean_post"]
             prompt_plus_messages = base_prompt.format(clean_post)
 
@@ -170,7 +171,7 @@ def test_model(model, tokenizer, base_prompt, ds, mode=None, verbose=False):
                 {"role": "system", "content": "You are a helpful assistant"},
                 {"role": "user", "content": prompt_plus_messages}
             ]
-            chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True).rstrip()
+            chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             input_ids_tokenized = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False).to(device)
             
             ######################
@@ -212,7 +213,6 @@ def test_model(model, tokenizer, base_prompt, ds, mode=None, verbose=False):
                 print("List labels")
                 print(labels_test)
 
-
     result = get_scores_from_preds(predictions_test, labels_test)
 
     return result
@@ -250,6 +250,7 @@ def log_test(model,
         exp_setup,
         hyper_param_str,
         metrics=[f1_score, precision_score, recall_score, roc_auc_score],
+        mode=None,
         ):
 
 
@@ -285,7 +286,7 @@ def log_test(model,
 
     # print(current_testing_dataset)
     try:
-        test_metrics = test_model(model, tokenizer, base_prompt, test_ds, mode=None, verbose=False)
+        test_metrics = test_model(model, tokenizer, base_prompt, test_ds, mode=mode, verbose=False)
     except Exception as e:
         print("TESTING FAILED")
         print(e)
@@ -352,6 +353,7 @@ def main(
     lr = 1e-5,
     lora_r = 8,
     exp_setup = exp_setup,
+    mode = None,
         ):
 
     local_rank = setup()
@@ -598,6 +600,9 @@ def main(
 
             losses.append(loss.detach().item())
 
+            if mode != None:
+                break
+
         epoch_loss = sum(losses) / len(losses) # loss on current device
 
         epoch_loss_tensor = torch.tensor(epoch_loss, device=device)
@@ -618,7 +623,7 @@ def main(
             print(f"Epoch {epoch} Loss: {epoch_loss_tensor.item()}")
             global_training_losses.append(epoch_loss_tensor.item())
 
-        val_loss = validate_model(model, hf_time_1_validation_loader, device, world_size, local_rank)
+        val_loss = validate_model(model, hf_time_1_validation_loader, device, world_size, local_rank, mode=mode)
         global_validation_losses.append(val_loss)
 
     print()
@@ -639,13 +644,14 @@ def main(
                             current_testing_dataset="",
                             training_order=[],
                             trainable_params=n_trainable_params,
-                            epochs=epochs,
+                            epochs=n_epochs,
                             lr=lr,
                             batch_size=batch_size,
                             num_samples=n_samples,
                             exp_setup=exp_setup,
                             hyper_param_str=hyper_param_str,
-                            metrics=[f1_score, precision_score, recall_score, roc_auc_score])
+                            metrics=[f1_score, precision_score, recall_score, roc_auc_score],
+                            mode=mode)
         print(test_result)
 
 
@@ -677,4 +683,5 @@ if __name__ == "__main__":
         lr = 1e-5,
         lora_r = 8,
         exp_setup = exp_setup,
+        mode = "test",
         )
