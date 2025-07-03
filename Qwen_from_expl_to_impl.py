@@ -17,6 +17,8 @@ from tqdm.auto import tqdm
 import emoji
 import json
 from huggingface_hub import whoami, HfFolder
+from copy import deepcopy
+
 
 import gc
 
@@ -26,7 +28,7 @@ from torch.utils.data.distributed import DistributedSampler
 import torch.nn as nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
-from torch.nn import CrossEntropyLoss, Softmax
+from torch.nn import CrossEntropyLoss, Softmax, KLDivLoss
 from torch.utils.data.dataloader import DataLoader
 
 from transformers import BitsAndBytesConfig
@@ -834,8 +836,10 @@ class CLTechniques:
             for inputs_mem, labels_mem in self.memory:
                 inputs_mem = {k:torch.squeeze(v).to(self.device) for k,v in inputs_mem.items()}
                 labels_mem = torch.squeeze(labels_mem).to(self.device)
-                outputs = self.model(**inputs_mem, labels=labels_mem)
-                outputs.loss.backward()
+                outputs = self.model(**inputs_mem)
+                loss = loss_f(outputs.logits, labels_mem)
+                loss.backward()
+
             self.ref_grad = [p.grad.clone() for p in self.model.parameters() if p.requires_grad] # i think this should be with req grad
             self.model.zero_grad()
 
@@ -904,6 +908,7 @@ class CLTechniques:
                         if k in ['input_ids', 'attention_mask']}
 
                 outputs = self.model(**inputs)
+                # does this need a loss?????????????
                 torch.norm(outputs.logits, p=2, dim=1).mean().backward()
 
                 for n, p in self.model.named_parameters():
@@ -1367,7 +1372,7 @@ if __name__ == "__main__":
     #     dataset_path="df_from_exp_to_imp.csv",
     #     )
 
-    cl_techniques = ["ewc", "agem", "mas"]
+    cl_techniques = ["agem", "mas"]
     for cl_technique in cl_techniques:
         main(
             type_experiment="from_expl_to_impl",
