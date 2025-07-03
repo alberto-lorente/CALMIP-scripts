@@ -75,9 +75,14 @@ def get_probability_distribution(logits):
     probability_dist = Softmax(dim=-1)(logits)
     return probability_dist
 
+loss_fn = CrossEntropyLoss(ignore_index=-100) # ignore the left pad tokens
 def loss_f(logits, labels):
-    loss_fn = CrossEntropyLoss(reduce=False)
-    loss = loss_fn(logits.view(-1, logits.size(-1)), labels.view(-1))
+
+    flat_logits = logits.view(-1, logits.size(-1))
+    flat_labels = labels.view(-1)
+
+    loss = loss_fn(flat_logits, flat_labels)
+    
     return loss
 
 
