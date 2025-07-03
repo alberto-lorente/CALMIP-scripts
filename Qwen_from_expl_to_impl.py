@@ -735,11 +735,14 @@ def main(
         hf_ds_name = dataset_names[i]
         hf_datasets.append({hf_ds_name: hf_ds})
 
-    hf_datasets = [
-        {task_name: hf_time.map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)}
-        for hf_data in hf_datasets
-        for task_name, hf_time in hf_data.items() 
-    ]
+    hf_datasets_processed = []
+    for ds in hf_datasets:
+        ds_dict = {}
+        for task_name, hf_data in ds.items():
+            ds_dict[task_name] = {}
+            for split in hf_data:
+                ds_dict[task_name][split] = hf_data[split].map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)
+        hf_datasets_processed.append(ds_dict)
 
     n_samples_per_ds = [
         len(hf_time["train"])
@@ -747,7 +750,7 @@ def main(
         for task_name, hf_time in hf_data.items() 
     ]
 
-    for ds in hf_datasets:
+    for ds in hf_datasets_processed:
         for hf_data in ds.values():
             hf_data.set_format("torch")
 
@@ -755,12 +758,23 @@ def main(
                     "target", "implied_statement", "split", "time", "task",
                     "formatted_prompt", "label", "__index_level_0__"]
 
-    hf_datasets = [
-        {task_name: {split: hf_time[split].remove_columns(cols_to_remove)}}
-        for hf_data in hf_datasets
-        for task_name, hf_time in hf_data.items()
-        for split in hf_time 
-        if split != "test"]
+
+    hf_datasets_no_cols = []
+    for ds in hf_datasets_processed:
+        ds_dict = {}
+        for task_name, hf_data in ds.items():
+            ds_dict[task_name] = {}
+            for split in hf_data:
+                if split != "test":
+                    ds_dict[task_name][split] = hf_data[split].remove_columns(cols_to_remove)
+        hf_datasets_no_cols.append(ds_dict)
+
+    # hf_datasets = [
+    #     {task_name: {split: hf_time[split].remove_columns(cols_to_remove)}}
+    #     for hf_data in hf_datasets
+    #     for task_name, hf_time in hf_data.items()
+    #     for split in hf_time 
+    #     if split != "test"]
 
     print("hf_datasets before data collator:")
     print(hf_datasets)
@@ -776,7 +790,7 @@ def main(
     # ]
 
     distributed_samplers = []
-    for ds in hf_datasets:
+    for ds in hf_datasets_no_cols:
         ds_dict = {}
         print("ds:")
         print(ds)
@@ -792,7 +806,11 @@ def main(
                 if split != "test":
                    distr_sampler = DistributedSampler(hf_data[split], num_replicas=world_size, rank=local_rank, shuffle=False)
                    ds_dict[task_name][split] = distr_sampler
-            dsitr_samplers.append(ds_dict)
+        distributed_samplers.append(ds_dict)
+
+    print("distributed_samplers")
+    print(distributed_samplers)
+    print()
 
     data_loaders = []
     for i, distr_sampler in enumerate(distributed_samplers):
@@ -800,9 +818,13 @@ def main(
         ds_dict = {}
         ds_dict[ds_name] = {}
         for split, distributed_sampler in distr_sampler[ds_name].items():
-            data_loader = DataLoader(hf_datasets[i][ds_name][split], collate_fn=data_collator, batch_size=batch_size, sampler=distributed_sampler)
+            data_loader = DataLoader(hf_datasets_no_cols[i][ds_name][split], collate_fn=data_collator, batch_size=batch_size, sampler=distributed_sampler)
             ds_dict[ds_name][split] = data_loader
         data_loaders.append(ds_dict)
+
+    print("data_loaders")
+    print(data_loaders)
+    print()
 
 
     # ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
