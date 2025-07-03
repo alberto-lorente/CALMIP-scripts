@@ -462,16 +462,19 @@ OUTPUT AND FORMAT: your output should be just the label."""
         # add the testing def from the other experiment
         print("_________________________________")
         print("Testing the model")
-        for i, test_batch in enumerate(hf_time_1["test"]):
+        predictions_test = []
+        model.eval()
+        for i, test_batch in enumerate(hf_time_1_test_loader):
 
             if i > 0:
                 break
+
+            batch = {k:torch.squeeze(v).to(device) for k,v in test_batch.items()}
             
-            text = test_batch["formatted_prompt"]
-            tokenized_chat_template, messages_list = preprocess_and_tokenize(text, label=False, add_generation_prompt=True, output_messages_list=True)
-            output = model.module.generate(**tokenized_chat_template.to(device))
-            pred = tokenizer.decode(output[0], skip_special_tokens=True)
-            
+            ######################
+            output = model.module.generate(**batch, top_p=90, temperature=0.6)
+            pred = tokenizer.batch_decode(output, skip_special_tokens=True)
+            predictions_test.append(pred)
             print("Text: ", text)
             print()
             print("Tokenized Chat Template: ", tokenized_chat_template)
@@ -479,7 +482,14 @@ OUTPUT AND FORMAT: your output should be just the label."""
             print("Output: ", output)
             print()
             print("Prediction: ", pred)
-
+        print("____________________________________________________")
+        print("Checking the predictions")
+        print("Number of prediction batches")
+        print(len(predictions_test))
+        print("Number of predictions in each batch")
+        print(len(predictions_test[0]))
+        print()
+        print("--------------------------------------------------")
         print("CHECKING GENERATION")
         print()
         print(messages_list)
