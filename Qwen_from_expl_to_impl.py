@@ -297,6 +297,13 @@ def log_test(model,
 
     log_test.update(test_metrics)
 
+    for k, v in log_test.items():
+        if type(v) not in [int, float, str]:
+            try:
+                log_test[k] = float(v)
+            except:
+                log_test[k] = str(v)
+
     return log_test
 
 def validate_model(model, validation_loader, device, world_size, local_rank, mode=None):
@@ -336,6 +343,279 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
 
     return val_loss_tensor.item()
 
+
+def train(  model, 
+            model_id, 
+            tokenizer,
+            base_prompt,
+            n_epochs, 
+            train_loader, 
+            validation_loader, 
+            test_datasets, # actually will have to be the full datasets since we are not using dataloaders but the whole ds and then doing df["test"]
+            type_experiment, 
+            cl_technique, 
+            time,
+            current_training_dataset,
+            current_testing_dataset,
+            training_order,
+            n_trainable_params,
+            lr, 
+            batch_size, 
+            n_samples, 
+            exp_setup, 
+            hyper_param_str, 
+            loss_f, 
+            optimizer, 
+            device, 
+            world_size, 
+            local_rank,
+            metrics=[f1_score, precision_score, recall_score, roc_auc_score], 
+            mode=None):
+
+    print("_________________________________")
+    print("Training the model")
+    print()
+
+    global_training_losses = []
+    global_validation_losses = []
+
+    # for task in tasks/dataset - train, eval
+    for epoch in tqdm(range(n_epochs)):
+
+        torch.cuda.empty_cache()
+        gc.collect()
+        model.train()
+
+        epoch_validation_losses = []
+        train_losses = []
+
+        print("Epoch: ", epoch)
+
+        for i, batch in enumerate(train_loader):
+            # if i > 0:
+            #     continue
+
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            print("\tBatch: ", i)
+            batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
+
+            # print(batch["input_ids"].shape)
+            # print(batch["attention_mask"].shape)
+            # print(batch["labels"].shape)
+
+            output = model(**batch)
+            logits = output.logits
+            # print("Shape Logits")
+            # print(logits.shape)
+            # print("Shape Labels")
+            # print(batch["labels"].shape)
+            loss = loss_f(logits, batch["labels"])
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+
+            train_losses.append(loss.detach().item())
+
+            if mode != None:
+                break
+
+        epoch_loss = sum(train_losses) / len(train_losses) # loss on current device
+
+        epoch_loss_tensor = torch.tensor(epoch_loss, device=device)
+
+        dist.all_reduce(epoch_loss_tensor, op=dist.ReduceOp.SUM) # loss on all devices
+
+        epoch_loss_tensor /= world_size # avg
+
+        if local_rank == 0:
+            # print("-------------------------EXAMPLE BATCH, OUTPUT AND SO ON----------------")
+            # print(batch["input_ids"])
+            # print(batch["labels"])
+            # print(batch["attention_mask"])
+            # print("LOSS: ", loss)
+            # print("OUTPUT: ", output)
+            # print()
+            # print("----------------------------------------------------------------")
+            print(f"Epoch {epoch} Loss: {epoch_loss_tensor.item()}")
+            global_training_losses.append(epoch_loss_tensor.item())
+
+        val_loss = validate_model(model, validation_loader, device, world_size, local_rank, mode=mode)
+        epoch_validation_losses.append(val_loss)
+        global_validation_losses.append(val_loss)
+
+    print()
+
+    if local_rank == 0:
+        print("---------------------TRAINING ENDED---------------")
+        print("Final Training Losses:", global_training_losses)
+        print("Final Validation Losses:", global_validation_losses)
+
+    if local_rank == 0:
+        tests = []
+        for idx, test_loader in enumerate(test_datasets):
+            test_result = log_test(model=model,
+                            model_id=model_id,
+                            test_ds=test_loader,
+                            type_experiment=type_experiment,
+                            cl_technique=cl_technique,
+                            time=time,
+                            current_training_dataset=training_order[time],
+                            current_testing_dataset=testing_order[idx],
+                            training_order=training_order,
+                            trainable_params=n_trainable_params,
+                            epochs=n_epochs,
+                            lr=lr,
+                            batch_size=batch_size,
+                            num_samples=n_samples,
+                            exp_setup=exp_setup,
+                            hyper_param_str=hyper_param_str,
+                            metrics=metrics,
+                            mode=mode,
+                            tokenizer=tokenizer,
+                            base_prompt=base_prompt,
+                            device=device)
+            tests.append(test_result)
+
+        train_val_log = {"model_id": model_id,
+                    "current_ds_training": current_training_dataset,
+                    "epochs": int(n_epochs),
+                    "time": int(time),
+                    "num_samples_in_curr_ds": n_samples,
+                    "training_details": list(global_training_losses),
+                    "validation_details": list(global_validation_losses),
+                    "type_experiment": type_experiment,
+                    "cl_technique": cl_technique,
+                    "train_order": " -> ".join(training_order)
+                    }
+
+        print(tests)
+
+    return model, tests, train_val_log 
+
+def continual_training(model,
+                        model_id,
+                        tokenizer,
+                        n_trainable_params,
+                        base_prompt,
+                        training_order,
+                        testing_order,
+                        hf_datasets,
+                        epochs_array,
+                        ks_array,
+                        cl_technique,
+                        type_experiment,
+                        hyperparam_str,
+                        batch_size,
+                        lr,
+                        loss_f,
+                        optimizer,
+                        device,
+                        world_size,
+                        local_rank,
+                        exp_setup,
+                        metrics=[f1_score, precision_score, recall_score, roc_auc_score],
+                        mode=None):
+
+    zero_testing_order = [dataset for dataset in testing_order if dataset not in training_order]
+
+    results = {
+                "model": model_id,
+                "training_order": training_order,
+                "testing_order": testing_order,
+                "zero_testing":zero_testing_order,
+                "epochs": epochs_array,
+                "exp_setup": exp_setup,
+                "cl_technique": cl_technique,
+                "type_experiment": type_experiment,
+                "batch_size": batch_size,
+                "learning_rate": lr,
+                "results": []
+                }
+
+    print("CONTINUAL LEARNING EXPERIMENT SET UP")
+    for k, v in results.items():
+        if k != "exp_setup":
+            print(k, ":\t", v)
+            print()
+
+    data_loaders_train = []
+    data_loaders_val = []
+    test_datasets = []
+    for time, ds in enumerate(training_order):
+        data_loaders_train.append(hf_datasets[ds]["train"])
+        data_loaders_val.append(hf_datasets[ds]["validation"])
+        test_datasets.append(hf_datasets[ds])
+
+    test_results = []
+    train_results = []
+
+    for time, current_training_dataset in enumerate(data_loaders_train): # current tr_ds is a string!!
+        print("------------------Starting Experience----------------")
+        print(f"------------------TIME {time}------------------------")
+        print()
+        # torch.cuda.ipc_collect()
+        # torch.cuda.empty_cache()
+        n_epochs = epochs_array[time]
+        if ks_array != None:
+            num_samples = ks_array[time]
+        else:
+            num_samples = "all"
+
+        current_dataset_name = training_order[time]
+        current_testing_dataset = testing_order[time]
+
+        print(f"Epochs in the current time: {epochs}\nNumber of training samples: {num_samples}\nCurrent Dataset: {current_dataset_name}")
+
+        n_trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) # in case I increase/decrease the number of params
+
+        ############################## GETTING THE EXP PARAMS, SERVING THE DATA, SAMPLING AND ALL OF THAT WORKS WELL ##################################
+
+        # continue
+
+
+        model, train_vals, tests = train(   model=model,
+                                            model_id=model_id,
+                                            tokenizer=tokenizer,
+                                            base_prompt=base_prompt,
+                                            n_epochs=n_epochs, 
+                                            train_loader=data_loaders_train[time], 
+                                            validation_loader=data_loaders_val[time], 
+                                            test_datasets=test_datasets, # actually will have to be the full datasets since we are not using dataloaders but the whole ds and then doing df["test"]
+                                            type_experiment=type_experiment, 
+                                            cl_technique=cl_technique, 
+                                            time=time,
+                                            current_training_dataset=current_training_dataset,
+                                            current_testing_dataset=current_testing_dataset,
+                                            training_order=training_order,
+                                            n_trainable_params=n_trainable_params,
+                                            lr=lr, 
+                                            batch_size=batch_size, 
+                                            n_samples=n_samples, 
+                                            exp_setup=exp_setup, 
+                                            hyper_param_str=hyper_param_str, 
+                                            loss_f=loss_f, 
+                                            optimizer=optimizer, 
+                                            device=device, 
+                                            world_size=world_size, 
+                                            local_rank=local_rank,
+                                            metrics=metrics, 
+                                            mode=mode)
+        test_results.extend(tests)
+        train_results.extend(train_vals)
+
+        print("RESULTS FOR CURRENT EXPERIENCE DONE")
+        print()
+        print(test_results)
+
+        if mode != None:
+            break
+
+    return model, test_results, train_results
+
+
 with open("llm_experiments_set_up.json", "r") as f:
     exp_setup = json.load(f)
 
@@ -357,6 +637,7 @@ def main(
     lora_r = 8,
     exp_setup = exp_setup,
     mode = None,
+    dataset_path="df_from_exp_to_imp.csv"
         ):
 
     local_rank = setup()
@@ -365,9 +646,7 @@ def main(
 
     ########################################################## DATA WORK
     print("_________________________________")
-    print("Preapring the Data")
-
-    df = pd.read_csv("df_from_exp_to_imp.csv")
+    print("Preapring the Tokenizer")
 
     tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
     if tokenizer.pad_token is None and "Llama" in model_id: tokenizer.pad_token = '<|finetune_right_pad_id|>'
@@ -418,74 +697,91 @@ def main(
             "attention_mask": attention_mask
         }
 
+    print("----------Preparing the Data-----------------")
+
+    print("_________________________________")
+    print("Loading and filtering the Data")
+
+    df = pd.read_csv(dataset_path)
+
     #### Attaching the prompt to the clean post
     df["formatted_prompt"] = df["clean_post"].apply(format_prompt)
     df["label"] = df["class"].apply(translate_class_to_label)
 
     # ### Turning the Df into a DatasetDict
 
-    t_1 = []
-    t_2 = []
 
-    for split in df["split"].unique():
+    times_array = list(df["time"].unique())
+    datasets = []
+    dataset_names = list(df["task"].unique())
 
-        split_df_1 = df[(df["split"] == split) & (df["time"] == 1)]
-        split_df_2 = df[(df["split"] == split) & (df["time"] == 2)]
+    for time in times_array:
 
-        hf_split_1 = Dataset.from_pandas(split_df_1)
-        hf_split_2 = Dataset.from_pandas(split_df_2)
-        
-        t_1.append(hf_split_1)
-        t_2.append(hf_split_2)
+        time_ds = []
+        for split in df["split"].unique():
 
-    hf_time_1 = DatasetDict({t_1[0]["split"][0]: t_1[0], 
-                            t_1[1]["split"][0]: t_1[1],
-                            t_1[2]["split"][0]: t_1[2]})
+            split_df = df[(df["split"] == split) & (df["time"] == time)]
+            hf_split = Dataset.from_pandas(split_df)
+            time_ds.append(hf_split)
+        datasets.append(time_ds)
 
-    hf_time_2 = DatasetDict({t_2[0]["split"][0]: t_2[0], 
-                            t_2[1]["split"][0]: t_2[1],
-                            t_2[2]["split"][0]: t_2[2]})
+    hf_datasets = []
 
+    for i, dataset in enumerate(datasets):
 
-    ########################################################## TOKENIZER WORK
+        hf_ds = DatasetDict({dataset[0]["split"][0]: dataset[0], 
+                            dataset[1]["split"][0]: dataset[1],
+                            dataset[2]["split"][0]: dataset[2]})
+        hf_ds_name = dataset_names[i]
+        hf_datasets.append({hf_ds_name: hf_ds})
 
-    hf_time_1 = hf_time_1.map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)
-    hf_time_2 = hf_time_2.map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)
+    hf_datasets = [
+        {task_name: hf_time.map(preprocess_and_tokenize, input_columns=["clean_post", "label"], batched=False)}
+        for hf_data in hf_datasets
+        for task_name, hf_time in hf_data.items() 
+    ]
 
-    n_samples = len(hf_time_1["train"])
+    n_samples_per_ds = [
+        len(hf_time["train"])
+        for hf_data in hf_datasets
+        for task_name, hf_time in hf_data.items() 
+    ]
 
-    hf_time_1.set_format("torch")
-    hf_time_2.set_format("torch")
+    for ds in hf_datasets:
+        for hf_data in ds.values():
+            hf_data.set_format("torch")
 
-    cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", "target", "implied_statement", "split", "time", "formatted_prompt", "label", "__index_level_0__"]
+    cols_to_remove = ["clean_post", "post", "class", "implicit_class", "extra_implicit_class", 
+                    "target", "implied_statement", "split", "time", "task",
+                    "formatted_prompt", "label", "__index_level_0__"]
 
-    for split in hf_time_1:
-        if split != "test":
-            hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
-            hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
-        # hf_time_1[split] = hf_time_1[split].remove_columns(cols_to_remove)
-        # hf_time_2[split] = hf_time_2[split].remove_columns(cols_to_remove)
-
+    hf_datasets = [
+        {task_name: hf_time[split].remove_columns(cols_to_remove)}
+        for hf_data in hf_datasets
+        for task_name, hf_time in hf_data.items()
+        for split in hf_time 
+        if split != "test"]
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-    sampler_train_1 = DistributedSampler(hf_time_1["train"], num_replicas=world_size, rank=local_rank, shuffle=False)
-    sampler_train_2 = DistributedSampler(hf_time_2["train"], num_replicas=world_size, rank=local_rank, shuffle=False)
+    distributed_samplers = [
+        {task_name: {split: DistributedSampler(hf_time[split], num_replicas=world_size, rank=local_rank, shuffle=False)}}
+        for hf_data in hf_datasets
+        for task_name, hf_time in hf_data.items()
+        for split in hf_time 
+        if split != "test"
+    ]
 
-    sampler_validation_1 = DistributedSampler(hf_time_1["validation"], num_replicas=world_size, rank=local_rank, shuffle=False)
-    sampler_validation_2 = DistributedSampler(hf_time_2["validation"], num_replicas=world_size, rank=local_rank, shuffle=False)
+    data_loaders = []
+    for i, distr_sampler in enumerate(distributed_samplers):
+        ds_name = list(distr_sampler.keys())[0]
+        ds_dict = {}
+        ds_dict[ds_name] = {}
+        for split, distributed_sampler in distr_sampler[ds_name].items():
+            data_loader = DataLoader(hf_datasets[i][ds_name][split], collate_fn=data_collator, batch_size=batch_size, sampler=distributed_sampler)
+            ds_dict[ds_name][split] = data_loader
+        data_loaders.append(ds_dict)
 
-    sampler_test_1 = DistributedSampler(hf_time_1["test"], num_replicas=world_size, rank=local_rank, shuffle=False)
-    sampler_test_2 = DistributedSampler(hf_time_2["test"], num_replicas=world_size, rank=local_rank, shuffle=False)
-
-
-    hf_time_1_train_loader = DataLoader(hf_time_1["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_train_1)
-    hf_time_1_validation_loader = DataLoader(hf_time_1["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_validation_1)
-    hf_time_1_test_loader = DataLoader(hf_time_1["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_test_1)
-
-    hf_time_2_train_loader = DataLoader(hf_time_2["train"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_train_2)
-    hf_time_2_validation_loader = DataLoader(hf_time_2["validation"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_validation_2)
-    hf_time_2_test_loader = DataLoader(hf_time_2["test"], collate_fn=data_collator, batch_size=batch_size, sampler=sampler_test_2)
 
     # ### So far, created the prompt, did the messages with the prompt and answer in place. Applied to chat template and tokenized 
 
@@ -532,6 +828,9 @@ def main(
 
     # so that i can use 2 gpus
     model.to(device)
+
+    # init cl model here
+    
     model = DDP(model, 
                 device_ids=[local_rank], 
                 output_device=local_rank, 
@@ -559,116 +858,56 @@ def main(
     optimizer = AdamW((param for param in model.parameters() if param.requires_grad), lr=lr)
     
     print("_________________________________")
-    print("Training the model")
-    print()
 
-    # for task in tasks/dataset - train, eval
-    for epoch in tqdm(range(n_epochs)):
+    testing_order = dataset_names
+    training_order = dataset_names
+    hf_datasets = data_loaders
+    epochs_array = []
+    for i in range(epochs):
+        epochs_array.append(n_epochs)
+    ks_array = None
 
-        torch.cuda.empty_cache()
-        gc.collect()
-        model.train()
-
-        global_training_losses = []
-        global_validation_losses = []
-
-        print("Epoch: ", epoch)
-        losses = []
-
-        for i, batch in enumerate(hf_time_1_train_loader):
-            # if i > 0:
-            #     continue
-
-            torch.cuda.empty_cache()
-            gc.collect()
-
-            print("\tBatch: ", i)
-            batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
-
-            # print(batch["input_ids"].shape)
-            # print(batch["attention_mask"].shape)
-            # print(batch["labels"].shape)
-
-            output = model(**batch)
-            logits = output.logits
-            # print("Shape Logits")
-            # print(logits.shape)
-            # print("Shape Labels")
-            # print(batch["labels"].shape)
-            loss = loss_f(logits, batch["labels"])
-
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
-
-            losses.append(loss.detach().item())
-
-            if mode != None:
-                break
-
-        epoch_loss = sum(losses) / len(losses) # loss on current device
-
-        epoch_loss_tensor = torch.tensor(epoch_loss, device=device)
-
-        dist.all_reduce(epoch_loss_tensor, op=dist.ReduceOp.SUM) # loss on all devices
-
-        epoch_loss_tensor /= world_size # avg
-
-        if local_rank == 0:
-            # print("-------------------------EXAMPLE BATCH, OUTPUT AND SO ON----------------")
-            # print(batch["input_ids"])
-            # print(batch["labels"])
-            # print(batch["attention_mask"])
-            # print("LOSS: ", loss)
-            # print("OUTPUT: ", output)
-            # print()
-            # print("----------------------------------------------------------------")
-            print(f"Epoch {epoch} Loss: {epoch_loss_tensor.item()}")
-            global_training_losses.append(epoch_loss_tensor.item())
-
-        val_loss = validate_model(model, hf_time_1_validation_loader, device, world_size, local_rank, mode=mode)
-        global_validation_losses.append(val_loss)
-
-    print()
-
-    if local_rank == 0:
-        print("---------------------TRAINING ENDED---------------")
-        print("Final Training Losses:", global_training_losses)
-        print("Final Validation Losses:", global_validation_losses)
-
-    if local_rank == 0:
-        test_result = log_test(model=model,
-                            model_id=model_id,
-                            test_ds=hf_time_1,
-                            type_experiment=type_experiment,
-                            cl_technique=cl_technique,
-                            time=0,
-                            current_training_dataset="",
-                            current_testing_dataset="",
-                            training_order=[],
-                            trainable_params=n_trainable_params,
-                            epochs=n_epochs,
-                            lr=lr,
-                            batch_size=batch_size,
-                            num_samples=n_samples,
-                            exp_setup=exp_setup,
-                            hyper_param_str=hyper_param_str,
-                            metrics=[f1_score, precision_score, recall_score, roc_auc_score],
-                            mode=mode,
-                            tokenizer=tokenizer,
-                            base_prompt=base_prompt,
-                            device=device)
-        print(test_result)
+    model, test_results, train_results = continual_training(model=model,
+                                                        model_id=model_id,
+                                                        tokenizer=tokenizer,
+                                                        n_trainable_params=n_trainable_params,
+                                                        base_prompt=base_prompt,
+                                                        training_order=training_order,
+                                                        testing_order=testing_order,
+                                                        hf_datasets=hf_datasets,
+                                                        epochs_array=epochs_array,
+                                                        ks_array=ks_array,
+                                                        cl_technique=cl_technique,
+                                                        type_experiment=type_experiment,
+                                                        hyperparam_str=hyper_param_str,
+                                                        batch_size=batch_size,
+                                                        lr=lr,
+                                                        loss_f=loss_f,
+                                                        optimizer=optimizer,
+                                                        device=device,
+                                                        world_size=world_size,
+                                                        local_rank=local_rank,
+                                                        exp_setup=exp_setup,
+                                                        metrics=metrics,
+                                                        mode=mode)
 
 
     if local_rank==0:
+        print("_________________________________")
         experiment_json_name = "_".join([type_experiment, model_id.replace("/", "-"), cl_technique, hyper_param_str]) + ".json"
         try:
             with open(experiment_json_name, "w") as f:
-                json.dump(log_test, f, indent=4)
+                json.dump(test_results, f, indent=4)
         except Exception as e:
             print("Result couldn't be saved.")
             print(e)
+        try:
+            with open("train_log-" + experiment_json_name, "w") as f:
+                json.dump(train_results, f, indent=4)
+        except Exception as e:
+            print("Train Log couldn't be saved.")
+            print(e)
+
 
     if local_rank == 0:
         print("_________________________________")
@@ -690,4 +929,5 @@ if __name__ == "__main__":
         lora_r = 8,
         exp_setup = exp_setup,
         mode = "test",
+        dataset_path="df_from_exp_to_imp.csv",
         )
