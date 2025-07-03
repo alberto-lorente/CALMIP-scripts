@@ -439,7 +439,7 @@ def train(  model,
             # print("OUTPUT: ", output)
             # print()
             # print("----------------------------------------------------------------")
-            print(f"Epoch {epoch} Loss: {epoch_loss_tensor.item()}")
+            print(f"Epoch Loss: {epoch_loss_tensor.item()}")
             global_training_losses.append(epoch_loss_tensor.item())
 
         val_loss = validate_model(model, validation_loader, device, world_size, local_rank, mode=mode)
@@ -567,7 +567,7 @@ def continual_training(model,
         current_dataset_name = training_order[time]
         current_testing_dataset = testing_order[time]
 
-        print(f"Epochs in the current time: {epochs}\nNumber of training samples: {num_samples}\nCurrent Dataset: {current_dataset_name}")
+        print(f"Epochs in the current time: {n_epochs}\nNumber of training samples: {num_samples}\nCurrent Dataset: {current_dataset_name}")
 
         n_trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad) # in case I increase/decrease the number of params
 
