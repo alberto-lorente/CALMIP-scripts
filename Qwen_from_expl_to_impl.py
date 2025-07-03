@@ -232,7 +232,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             #                                 max_new_tokens=10,
             #                                 return_dict_in_generate=False))
             # print("----------------right after output---------------------------------------")
-            output = model.module.generate(input_ids=input_ids_tokenized, 
+            output = model.module.model.generate(input_ids=input_ids_tokenized, 
                                             attention_mask=attention_mask, 
                                             top_p=0.9, 
                                             temperature=0.6, 
