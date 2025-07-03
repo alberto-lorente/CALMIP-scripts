@@ -142,7 +142,7 @@ def translate_prediction_to_label(text):
         return 1
 
 # to test_model we pass the whole dataset dictionary, not just the split
-def test_model(model, tokenizer, base_prompt, ds, mode=None, verbose=False):
+def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=False):
 
     print("_________________________________")
     print("Testing the model")
