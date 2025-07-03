@@ -291,7 +291,7 @@ def log_test(model,
     print(log_test)
     # print(current_testing_dataset)
     try:
-        test_metrics = test_model(model, tokenizer, base_prompt, test_ds, mode=mode, verbose=False, device=device)
+        test_metrics = test_model(model=model, tokenizer=tokenizer, base_prompt=base_prompt, ds=test_ds, mode=mode, verbose=False, device=device)
     except Exception as e:
         print("TESTING FAILED")
         print(e)
@@ -560,7 +560,9 @@ def continual_training(model,
         print(hf_datasets[time].keys())
         data_loaders_train.append(hf_datasets[time][ds]["train"])
         data_loaders_val.append(hf_datasets[time][ds]["validation"])
-        test_datasets.append(hf_datasets[time][ds])
+        test_datasets.append(hf_datasets[time][ds]["test"])
+    print("TEST DATASETS BEFORE STARTING THE EXPERIENCE")
+    print(test_datasets)
 
     test_results = []
     train_results = []
