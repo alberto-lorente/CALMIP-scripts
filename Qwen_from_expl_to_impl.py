@@ -185,13 +185,17 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             
             print("TOKENIZED CHAT TEMPLATE COMPUTED")
             print(input_ids_tokenized)
-
+            print(type(input_ids_tokenized))
+            if type(input_ids_tokenized) == list:
+                print("wrong type")
+                input_ids_tokenized = input_ids_tokenized[0]
             ######################
             print("----------------right beforeoutput---------------------------------------")
             output = model.module.generate(input_ids_tokenized["input_ids"], top_p=90, temperature=0.6)
             # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
             print("OUTPUT COMPUTED")
             print(output)
+            print(type(output))
             pred = tokenizer.decode(output[0][input_ids_tokenized['input_ids'].shape[1]:], skip_special_tokens=True).strip()
             print("PRED COMPUTED")
             print(pred)
