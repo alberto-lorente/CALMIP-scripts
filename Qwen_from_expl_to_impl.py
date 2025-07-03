@@ -560,7 +560,7 @@ def continual_training(model,
         print(hf_datasets[time].keys())
         data_loaders_train.append(hf_datasets[time][ds]["train"])
         data_loaders_val.append(hf_datasets[time][ds]["validation"])
-        test_datasets.append(hf_datasets[time][ds]["test"])
+        test_datasets.append(hf_datasets[time]["test"])
     print("TEST DATASETS BEFORE STARTING THE EXPERIENCE")
     print(test_datasets)
 
