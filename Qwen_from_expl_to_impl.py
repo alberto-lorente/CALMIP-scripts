@@ -172,127 +172,128 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
     full_generation = []
 
     model.eval()
-    with torch.no_grad():
-        # print("TESTING DS")
-        # print(ds)
-        # print()
-        # for i, test_item in enumerate(ds["test"]):
-        for i, test_item in enumerate(ds):
-            # print("TESTING ITEM")
-            # print(test_item)
-            # print(i)
-            target_label = test_item["label"]
-            labels_strings.append(target_label)
-            # print("TARGET LABEL")
-            # print(target_label)
-            if target_label == "NOT HATEFUL":
-                target_label = 0
-            elif target_label == "HATEFUL":
-                target_label = 1
-            
-            labels_test.append(target_label)
+    with torch.cuda.amp.autocast(dtype=torch.float32):
+        with torch.no_grad():
+            # print("TESTING DS")
+            # print(ds)
+            # print()
+            # for i, test_item in enumerate(ds["test"]):
+            for i, test_item in enumerate(ds):
+                # print("TESTING ITEM")
+                # print(test_item)
+                # print(i)
+                target_label = test_item["label"]
+                labels_strings.append(target_label)
+                # print("TARGET LABEL")
+                # print(target_label)
+                if target_label == "NOT HATEFUL":
+                    target_label = 0
+                elif target_label == "HATEFUL":
+                    target_label = 1
+                
+                labels_test.append(target_label)
 
-            formatted_prompt = test_item["formatted_prompt"]
-            # prompt_plus_messages = base_prompt.format(clean_post)
-            # print("FORMATTED PROMPT")
-            # print(formatted_prompt)
+                formatted_prompt = test_item["formatted_prompt"]
+                # prompt_plus_messages = base_prompt.format(clean_post)
+                # print("FORMATTED PROMPT")
+                # print(formatted_prompt)
 
 
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": formatted_prompt}
-            ]
-            chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-            # print("CHAT TEMPLATE COMPUTED")
-            # print(chat_template)
-            input_dict = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False)
-            input_dict = {k: v.to(device) for k, v in input_dict.items()}
-            input_ids_tokenized = input_dict["input_ids"]
-            attention_mask = input_dict["attention_mask"]
-            
-            # print("TOKENIZED CHAT TEMPLATE COMPUTED")
-            # print(input_ids_tokenized)
-            # print(type(input_ids_tokenized))
-            # if input_ids_tokenized.shape[0] == 1:
-            #     print("wrong size")
-            #     input_ids_tokenized = input_ids_tokenized.squeeze(0)
-            #     attention_mask = attention_mask.squeeze(0)
-            # print("NEW SHAPE")
-            # print(input_ids_tokenized.shape)
-            # print(attention_mask.shape)
-            # ######################
-            # print("----------------right beforeoutput---------------------------------------")
-            # # print(model)
-            # # print(model.module)
-            # # print(dir(model))
-            # # print(dir(model.module))
-            # # print(help(model.module.generate))
-            # print(model.module.generate(input_ids=input_ids_tokenized, 
-            #                                 attention_mask=attention_mask, 
-            #                                 top_p=0.9, 
-            #                                 temperature=0.6, 
-            #                                 max_new_tokens=10,
-            #                                 return_dict_in_generate=False))
-            # print("----------------right after output---------------------------------------")
-            output = model.module.model.generate(input_ids=input_ids_tokenized, 
-                                            attention_mask=attention_mask, 
-                                            top_p=0.9, 
-                                            temperature=0.6, 
-                                            max_new_tokens=10,
-                                            return_dict_in_generate=False)
-                    
-            # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
-            # print("OUTPUT COMPUTED")
-            # print(output)
-            # print(type(output))
-            seq = output[0]
-            # print(tokenizer.decode(seq, skip_special_tokens=True).strip())
-            pred = tokenizer.decode(seq[input_ids_tokenized.shape[1]:], skip_special_tokens=True)
-
-            full_generation.append(pred)
-            predicted_strings.append(pred)
-            # print("PRED COMPUTED")
-            # print(pred)
-            pred_label = translate_prediction_to_label(pred)
-            # print("PRED LABEL COMPUTED")
-            # print(pred_label)
-            predictions_test.append(pred_label)
-
-            if mode != None:
-                break
-
-            if verbose:
-                # print("Text: ", pred)
-                print()
-                # print("Chat Template: ", chat_template)
-                # print()
-                # print("Tokenized Chat Template: ", input_ids_tokenized)
-                # print()
-                # print("Output: ", output)
-                # print()
-                # print("Prediction: ", pred)
-                # print("____________________________________________________")
-                # print("Checking the predictions")
-                # print("Number of prediction batches")
-                # print(len(predictions_test))
-                # print("Number of predictions in each batch")
-                # print(len(predictions_test[0]))
-                # print()
-                # print("--------------------------------------------------")
-                # print("CHECKING GENERATION")
-                # print()
+                messages = [
+                    {"role": "system", "content": "You are a helpful assistant"},
+                    {"role": "user", "content": formatted_prompt}
+                ]
+                chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+                # print("CHAT TEMPLATE COMPUTED")
+                # print(chat_template)
+                input_dict = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False)
+                input_dict = {k: v.to(device) for k, v in input_dict.items()}
+                input_ids_tokenized = input_dict["input_ids"]
+                attention_mask = input_dict["attention_mask"]
+                
+                # print("TOKENIZED CHAT TEMPLATE COMPUTED")
                 # print(input_ids_tokenized)
-                # print()
-                # print("List predictions")
-                # print(predictions_test)
-                # print()
-                # print("List labels")
-                # print(labels_test)
+                # print(type(input_ids_tokenized))
+                # if input_ids_tokenized.shape[0] == 1:
+                #     print("wrong size")
+                #     input_ids_tokenized = input_ids_tokenized.squeeze(0)
+                #     attention_mask = attention_mask.squeeze(0)
+                # print("NEW SHAPE")
+                # print(input_ids_tokenized.shape)
+                # print(attention_mask.shape)
+                # ######################
+                # print("----------------right beforeoutput---------------------------------------")
+                # # print(model)
+                # # print(model.module)
+                # # print(dir(model))
+                # # print(dir(model.module))
+                # # print(help(model.module.generate))
+                # print(model.module.generate(input_ids=input_ids_tokenized, 
+                #                                 attention_mask=attention_mask, 
+                #                                 top_p=0.9, 
+                #                                 temperature=0.6, 
+                #                                 max_new_tokens=10,
+                #                                 return_dict_in_generate=False))
+                # print("----------------right after output---------------------------------------")
+                output = model.module.model.generate(input_ids=input_ids_tokenized, 
+                                                attention_mask=attention_mask, 
+                                                top_p=0.9, 
+                                                temperature=0.6, 
+                                                max_new_tokens=10,
+                                                return_dict_in_generate=False)
+                        
+                # pred = tokenizer.batch_decode(output, skip_special_tokens=True)
+                # print("OUTPUT COMPUTED")
+                # print(output)
+                # print(type(output))
+                seq = output[0]
+                # print(tokenizer.decode(seq, skip_special_tokens=True).strip())
+                pred = tokenizer.decode(seq[input_ids_tokenized.shape[1]:], skip_special_tokens=True)
 
-    result = get_scores_from_preds(predictions_test, labels_test)
-    result["predicted_strings"] = predicted_strings
-    result["labels_strings"] = labels_strings
-    result["full_generation"] = full_generation
+                full_generation.append(pred)
+                predicted_strings.append(pred)
+                # print("PRED COMPUTED")
+                # print(pred)
+                pred_label = translate_prediction_to_label(pred)
+                # print("PRED LABEL COMPUTED")
+                # print(pred_label)
+                predictions_test.append(pred_label)
+
+                if mode != None:
+                    break
+
+                if verbose:
+                    # print("Text: ", pred)
+                    print()
+                    # print("Chat Template: ", chat_template)
+                    # print()
+                    # print("Tokenized Chat Template: ", input_ids_tokenized)
+                    # print()
+                    # print("Output: ", output)
+                    # print()
+                    # print("Prediction: ", pred)
+                    # print("____________________________________________________")
+                    # print("Checking the predictions")
+                    # print("Number of prediction batches")
+                    # print(len(predictions_test))
+                    # print("Number of predictions in each batch")
+                    # print(len(predictions_test[0]))
+                    # print()
+                    # print("--------------------------------------------------")
+                    # print("CHECKING GENERATION")
+                    # print()
+                    # print(input_ids_tokenized)
+                    # print()
+                    # print("List predictions")
+                    # print(predictions_test)
+                    # print()
+                    # print("List labels")
+                    # print(labels_test)
+
+        result = get_scores_from_preds(predictions_test, labels_test)
+        result["predicted_strings"] = predicted_strings
+        result["labels_strings"] = labels_strings
+        result["full_generation"] = full_generation
 
     return result
 
@@ -388,41 +389,42 @@ def log_test(model,
 def validate_model(model, validation_loader, device, world_size, local_rank, mode=None):
 
     model.eval()
-    with torch.no_grad():
+    with torch.cuda.amp.autocast(dtype=torch.float32):
+        with torch.no_grad():
 
-        print("_________________________________")
-        print("Validating the model")
-        print()
-        torch.cuda.empty_cache()
-        gc.collect()
-
-        val_losses = [] # val loss for each batch
-
-        for i, batch in enumerate(validation_loader):
-            
-            # batch.to(device)
-            batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
-
-            output = model(**batch)
-            logits = output.logits
-            val_loss = loss_f(logits, batch["labels"])
-
-            val_losses.append(val_loss.detach().item())
-
-            if mode != None:
-                break
-        
-        val_loss_epoch = sum(val_losses)/len(val_losses)
-        val_loss_tensor = torch.tensor(val_loss_epoch, device=device)
-        dist.all_reduce(val_loss_tensor, op=dist.ReduceOp.SUM)
-        val_loss_tensor /= world_size
-
-        if local_rank == 0:
             print("_________________________________")
-            print("Validation completed")
+            print("Validating the model")
             print()
-            print(f"Validation Loss: {val_loss_tensor.item()}")
-            print("_________________________________")
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            val_losses = [] # val loss for each batch
+
+            for i, batch in enumerate(validation_loader):
+                
+                # batch.to(device)
+                batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
+
+                output = model(**batch)
+                logits = output.logits
+                val_loss = loss_f(logits, batch["labels"])
+
+                val_losses.append(val_loss.detach().item())
+
+                if mode != None:
+                    break
+            
+            val_loss_epoch = sum(val_losses)/len(val_losses)
+            val_loss_tensor = torch.tensor(val_loss_epoch, device=device)
+            dist.all_reduce(val_loss_tensor, op=dist.ReduceOp.SUM)
+            val_loss_tensor /= world_size
+
+            if local_rank == 0:
+                print("_________________________________")
+                print("Validation completed")
+                print()
+                print(f"Validation Loss: {val_loss_tensor.item()}")
+                print("_________________________________")
 
     return val_loss_tensor.item()
 
@@ -461,102 +463,103 @@ def train(  model,
 
     global_training_losses = []
     global_validation_losses = []
+    model.train()
+    with torch.cuda.amp.autocast(dtype=torch.float32):
 
     # for task in tasks/dataset - train, eval
-    for epoch in tqdm(range(n_epochs)):
-
-        torch.cuda.empty_cache()
-        gc.collect()
-        model.train()
-
-        epoch_validation_losses = []
-        train_losses = []
-
-        print("Epoch: ", epoch)
-
-        for i, batch in enumerate(train_loader):
-            # if i > 0:
-            #     continue
+        for epoch in tqdm(range(n_epochs)):
 
             torch.cuda.empty_cache()
             gc.collect()
-            batch_unsqueezed = batch
-            print("\tBatch: ", i)
-            batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
-            # print(batch["input_ids"].shape)
-            # print(batch["attention_mask"].shape)
-            # print(batch["labels"].shape)
+            epoch_validation_losses = []
+            train_losses = []
 
-            output = model.module.model(**batch)
-            # print(output)
-            logits = output.logits
-            # print("Shape Logits")
-            # print(logits.shape)
-            # print("Shape Labels")
-            # print(batch["labels"].shape)
-            loss = loss_f(logits, batch["labels"])
-            print("Checking that the model type is the continual learner to do the cls")
-            print(type(model.module))
-            print(type(model.module.cl))
-            # print(dir(model.module))
-            if model.module.cl:
-                batch['logits'] = logits  # needed for LwF
-                loss += model.module.cl.compute_regularization(batch)
-                model.module.cl.pre_backward(batch)
-            print("CL regularization and backward computed")
+            print("Epoch: ", epoch)
 
-            loss.backward()
+            for i, batch in enumerate(train_loader):
+                # if i > 0:
+                #     continue
+
+                torch.cuda.empty_cache()
+                gc.collect()
+                batch_unsqueezed = batch
+                print("\tBatch: ", i)
+                batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
+
+                # print(batch["input_ids"].shape)
+                # print(batch["attention_mask"].shape)
+                # print(batch["labels"].shape)
+
+                output = model.module.model(**batch)
+                # print(output)
+                logits = output.logits
+                # print("Shape Logits")
+                # print(logits.shape)
+                # print("Shape Labels")
+                # print(batch["labels"].shape)
+                loss = loss_f(logits, batch["labels"])
+                print("Checking that the model type is the continual learner to do the cls")
+                print(type(model.module))
+                print(type(model.module.cl))
+                # print(dir(model.module))
+                if model.module.cl:
+                    batch['logits'] = logits  # needed for LwF
+                    loss += model.module.cl.compute_regularization(batch)
+                    model.module.cl.pre_backward(batch)
+                print("CL regularization and backward computed")
+
+                loss.backward()
 
 
-            # needed agem (A-GEM)
-            if model.module.cl:
-                model.module.cl.post_backward()
-            print("CL post backward computed")
+                # needed agem (A-GEM)
+                if model.module.cl:
+                    model.module.cl.post_backward()
+                print("CL post backward computed")
 
-            optimizer.step()
-            optimizer.zero_grad()
+                optimizer.step()
+                optimizer.zero_grad()
 
-            train_losses.append(loss.detach().item())
+                train_losses.append(loss.detach().item())
 
-            if mode != None:
-                break
+                if mode != None:
+                    break
 
-        epoch_loss = sum(train_losses) / len(train_losses) # loss on current device
+            epoch_loss = sum(train_losses) / len(train_losses) # loss on current device
 
-        epoch_loss_tensor = torch.tensor(epoch_loss, device=device)
+            epoch_loss_tensor = torch.tensor(epoch_loss, device=device)
 
-        dist.all_reduce(epoch_loss_tensor, op=dist.ReduceOp.SUM) # loss on all devices
+            dist.all_reduce(epoch_loss_tensor, op=dist.ReduceOp.SUM) # loss on all devices
 
-        epoch_loss_tensor /= world_size # avg
+            epoch_loss_tensor /= world_size # avg
+
+            if local_rank == 0:
+                # print("-------------------------EXAMPLE BATCH, OUTPUT AND SO ON----------------")
+                # print(batch["input_ids"])
+                # print(batch["labels"])
+                # print(batch["attention_mask"])
+                # print("LOSS: ", loss)
+                # print("OUTPUT: ", output)
+                # print()
+                # print("----------------------------------------------------------------")
+                print(f"Epoch Loss: {epoch_loss_tensor.item()}")
+                global_training_losses.append(epoch_loss_tensor.item())
+
+            val_loss = validate_model(model, validation_loader, device, world_size, local_rank, mode=mode)
+            epoch_validation_losses.append(val_loss)
+            global_validation_losses.append(val_loss)
+
+        print()
 
         if local_rank == 0:
-            # print("-------------------------EXAMPLE BATCH, OUTPUT AND SO ON----------------")
-            # print(batch["input_ids"])
-            # print(batch["labels"])
-            # print(batch["attention_mask"])
-            # print("LOSS: ", loss)
-            # print("OUTPUT: ", output)
-            # print()
-            # print("----------------------------------------------------------------")
-            print(f"Epoch Loss: {epoch_loss_tensor.item()}")
-            global_training_losses.append(epoch_loss_tensor.item())
+            print("---------------------TRAINING ENDED---------------")
+            print("Final Training Losses:", global_training_losses)
+            print("Final Validation Losses:", global_validation_losses)
 
-        val_loss = validate_model(model, validation_loader, device, world_size, local_rank, mode=mode)
-        epoch_validation_losses.append(val_loss)
-        global_validation_losses.append(val_loss)
+        if model.module.cl:
+            model.module.cl.post_task_update(train_loader)
 
-    print()
-
-    if local_rank == 0:
-        print("---------------------TRAINING ENDED---------------")
-        print("Final Training Losses:", global_training_losses)
-        print("Final Validation Losses:", global_validation_losses)
-
-    if model.module.cl:
-        model.module.cl.post_task_update(train_loader)
-
-    print("-----------POST TRAINING CL UPDATES COMPLETED---------")
+        print("-----------POST TRAINING CL UPDATES COMPLETED---------")
 
 
     tests_results = []
