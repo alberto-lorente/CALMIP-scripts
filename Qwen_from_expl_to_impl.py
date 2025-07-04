@@ -403,13 +403,41 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
             for i, batch in enumerate(validation_loader):
                 
                 # batch.to(device)
+                batch_unsqueezed = batch
+                print("\tBatch: ", i)
                 batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
-                output = model(**batch)
-                logits = output.logits
-                val_loss = loss_f(logits, batch["labels"])
+                print("Squeezed Batch")
+                for k, v in batch.items():
+                    print(f"{k}: {v.shape}")
 
-                val_losses.append(val_loss.detach().item())
+                print("Unsqueezed Batch")
+                for k, v in batch_unsqueezed.items():
+                    print(f"{k}: {v.shape}")
+
+                try:
+                    output = model(**batch_unsqueezed)
+                    logits = output.logits
+                    val_loss = loss_f(logits, batch_unsqueezed["labels"])
+
+                    val_losses.append(val_loss.detach().item())
+
+                except Exception as e:
+
+                    print()
+                    print(e)
+                    print("Switching Batch Size to squeezed")
+
+                    output = model.module.model(**batch)
+                    # print(output)
+                    logits = output.logits
+                    # print("Shape Logits")
+                    # print(logits.shape)
+                    # print("Shape Labels")
+                    # print(batch["labels"].shape)
+                    val_loss = loss_f(logits, batch["labels"])
+                    val_losses.append(val_loss.detach().item())
+
 
                 if mode != None:
                     break
@@ -427,7 +455,6 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
                 print("_________________________________")
 
     return val_loss_tensor.item()
-
 
 def train(  model, 
             model_id, 
@@ -487,40 +514,86 @@ def train(  model,
                 print("\tBatch: ", i)
                 batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
+                print("Squeezed Batch")
+                for k, v in batch.items():
+                    print(f"{k}: {v.shape}")
+
+                print("Unsqueezed Batch")
+                for k, v in batch_unsqueezed.items():
+                    print(f"{k}: {v.shape}")
+
                 # print(batch["input_ids"].shape)
                 # print(batch["attention_mask"].shape)
                 # print(batch["labels"].shape)
+                try:
+                    output = model.module.model(**batch_unsqueezed)
+                    # print(output)
+                    logits = output.logits
+                    # print("Shape Logits")
+                    # print(logits.shape)
+                    # print("Shape Labels")
+                    # print(batch["labels"].shape)
+                    loss = loss_f(logits, batch_unsqueezed["labels"])
+                    print("Checking that the model type is the continual learner to do the cls")
+                    print(type(model.module))
+                    print(type(model.module.cl))
+                    # print(dir(model.module))
+                    if model.module.cl:
+                        batch_unsqueezed['logits'] = logits  # needed for LwF
+                        loss += model.module.cl.compute_regularization(batch_unsqueezed)
+                        model.module.cl.pre_backward(batch_unsqueezed)
+                    print("CL regularization and backward computed")
 
-                output = model.module.model(**batch)
-                # print(output)
-                logits = output.logits
-                # print("Shape Logits")
-                # print(logits.shape)
-                # print("Shape Labels")
-                # print(batch["labels"].shape)
-                loss = loss_f(logits, batch["labels"])
-                print("Checking that the model type is the continual learner to do the cls")
-                print(type(model.module))
-                print(type(model.module.cl))
-                # print(dir(model.module))
-                if model.module.cl:
-                    batch['logits'] = logits  # needed for LwF
-                    loss += model.module.cl.compute_regularization(batch)
-                    model.module.cl.pre_backward(batch)
-                print("CL regularization and backward computed")
-
-                loss.backward()
+                    loss.backward()
 
 
-                # needed agem (A-GEM)
-                if model.module.cl:
-                    model.module.cl.post_backward()
-                print("CL post backward computed")
+                    # needed agem (A-GEM)
+                    if model.module.cl:
+                        model.module.cl.post_backward()
+                    print("CL post backward computed")
 
-                optimizer.step()
-                optimizer.zero_grad()
+                    optimizer.step()
+                    optimizer.zero_grad()
 
-                train_losses.append(loss.detach().item())
+                    train_losses.append(loss.detach().item())
+
+                except Exception as e:
+
+                    print()
+                    print(e)
+                    print("Switching Batch Size to squeezed")
+
+                    output = model.module.model(**batch)
+                    # print(output)
+                    logits = output.logits
+                    # print("Shape Logits")
+                    # print(logits.shape)
+                    # print("Shape Labels")
+                    # print(batch["labels"].shape)
+                    loss = loss_f(logits, batch["labels"])
+                    print("Checking that the model type is the continual learner to do the cls")
+                    print(type(model.module))
+                    print(type(model.module.cl))
+                    # print(dir(model.module))
+                    if model.module.cl:
+                        batch['logits'] = logits  # needed for LwF
+                        loss += model.module.cl.compute_regularization(batch)
+                        model.module.cl.pre_backward(batch)
+                    print("CL regularization and backward computed")
+
+                    loss.backward()
+
+
+                    # needed agem (A-GEM)
+                    if model.module.cl:
+                        model.module.cl.post_backward()
+                    print("CL post backward computed")
+
+                    optimizer.step()
+                    optimizer.zero_grad()
+
+                    train_losses.append(loss.detach().item())
+
 
                 if mode != None:
                     break
@@ -1395,6 +1468,6 @@ if __name__ == "__main__":
                 lr = 1e-4,
                 lora_r = 8,
                 exp_setup = exp_setup,
-                mode = mode,
+                mode = "test",
                 dataset_path="df_from_exp_to_imp.csv",
                 )   
