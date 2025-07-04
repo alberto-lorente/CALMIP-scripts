@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -J qwen
 #SBATCH -N 1
-#SBATCH --ntasks=4
-#SBATCH --ntasks-per-node=4
-#SBATCH --gres=gpu:4
-#SBATCH --mem=64GB
+#SBATCH --ntasks=6
+#SBATCH --ntasks-per-node=6
+#SBATCH --gres=gpu:6
+#SBATCH --mem=96GB
 #SBATCH --time=18:00:00
 
 # According to Olympe's documentation for PyTorch,
@@ -27,7 +27,7 @@ echo "NODES : ${SLURM_JOB_NODELIST}"
 
 torchrun \
         --nnodes ${SLURM_NNODES} \
-        --nproc_per_node=4 \
+        --nproc_per_node=6 \
         --rdzv_id ${RANDOM} \
         --rdzv_backend=c10d \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
