@@ -1330,6 +1330,7 @@ def main(
 if __name__ == "__main__":
 
     mode=None
+    batch_size=2
 # "Models/Qwen2.5-0.5B", "Models/TinyLlama", 
     for model_id in ["Models/Llama-3.2-1B-Instruct"]:
         
@@ -1339,7 +1340,7 @@ if __name__ == "__main__":
             model_id = model_id,
             training_order=["explicit_hs", "implicit_hs"],
             testing_order=["explicit_hs", "implicit_hs"],
-            batch_size = 4,
+            batch_size = batch_size,
             n_epochs = 8,
             lr = 1e-4,
             lora_r = 8,
@@ -1389,7 +1390,7 @@ if __name__ == "__main__":
                 model_id = model_id,
                 training_order=["explicit_hs", "implicit_hs"],
                 testing_order=["explicit_hs", "implicit_hs"],
-                batch_size = 4,
+                batch_size = batch_size,
                 n_epochs = 8,
                 lr = 1e-4,
                 lora_r = 8,
