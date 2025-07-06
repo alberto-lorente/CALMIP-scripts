@@ -1456,7 +1456,12 @@ if __name__ == "__main__":
     for cl_technique in cl_techniques:
         # "Models/Qwen2.5-0.5B", "Models/TinyLlama", 
 
-        for model_id in ["Models/Llama-3.2-1B-Instruct"]:
+        for model_id in ["Models/SmolLM2-360M-Instruct", "Models/Llama-3.2-1B-Instruct", "Models/Qwen2.5-0.5B-Instruct", "Models/TinyLlama-1.1b-Chat-v1.0", ]:
+            if model_id.strip("Models/") not in os.listdir("Models") :
+                print(model_id.strip("Models/") + " NOT IN MODELS")
+                print()
+                print(os.listdir("Models"))
+                continue
             main(
                 type_experiment="from_expl_to_impl",
                 cl_technique=cl_technique,
