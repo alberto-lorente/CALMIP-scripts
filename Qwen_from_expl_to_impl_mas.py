@@ -389,7 +389,7 @@ def log_test(model,
 def validate_model(model, validation_loader, device, world_size, local_rank, mode=None):
 
     model.eval()
-    with torch.cuda.amp.autocast(dtype=torch.float32):
+    with torch.amp.autocast(dtype=torch.float32):
         with torch.no_grad():
 
             print("_________________________________")
@@ -1055,7 +1055,7 @@ def main(
 
     tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
     if tokenizer.pad_token is None and "Llama" in model_id: tokenizer.pad_token = '<|finetune_right_pad_id|>'
-    if tokenizer.pad_token is None and "Qwen" in model_id: tokenizer.pad_token = tokenizer.eos_token
+    elif tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
     tokenizer.chat_template = open(model_id + "/Tokenizer/chat_template.jinja").read()
 
     # print(tokenizer.chat_template)
@@ -1384,8 +1384,8 @@ def main(
         print("_________________________________")
         print("Saving the model and Tokenizer")
         model_name = model_id.split("/")[-1]
-        # model.module.model.save_pretrained(f"alberto-lorente/{model_name}/model_test")
-        # tokenizer.save_pretrained(f"alberto-lorente/{model_name}/tokenizer_test")
+        model.module.model.save_pretrained(f"alberto-lorente/{experiment_json_name}/model_test")
+        tokenizer.save_pretrained(f"alberto-lorente/{experiment_json_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
     print()
