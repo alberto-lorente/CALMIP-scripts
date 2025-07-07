@@ -48,6 +48,7 @@ def log_failed_batch(batch):
             json.dump([], f)
     with open("failed_batches.json", "r") as f:
         failed_batches = json.load(f)
+    batch = {k:list(v.detach().cpu().numpy()) for k,v in batch.items()}
     failed_batches.append(batch)
     with open("failed_batches.json", "w") as f:
         json.dump(failed_batches, f)

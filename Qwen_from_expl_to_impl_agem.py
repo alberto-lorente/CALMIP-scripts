@@ -48,6 +48,7 @@ def log_failed_batch(batch):
             json.dump([], f)
     with open("failed_batches.json", "r") as f:
         failed_batches = json.load(f)
+    batch = {k:list(v.detach().cpu().numpy()) for k,v in batch.items()}
     failed_batches.append(batch)
     with open("failed_batches.json", "w") as f:
         json.dump(failed_batches, f)
@@ -414,7 +415,7 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
                 # batch.to(device)
                 batch_unsqueezed = batch
                 print("\tBatch: ", i)
-                batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
+                batch = {k:torch.squeeze(v, dim=1).to(device) for k,v in batch.items()}
 
                 # print("Squeezed Batch")
                 # for k, v in batch.items():
@@ -523,7 +524,7 @@ def train(  model,
                 gc.collect()
                 batch_unsqueezed = batch
                 print("\tBatch: ", i)
-                batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
+                batch = {k:torch.squeeze(v, dim=1).to(device) for k,v in batch.items()}
 
                 for k, v in batch.items():
                     if v.shape[0] != batch_size:
@@ -1418,6 +1419,7 @@ def main(
     print()
     print("_________________________________")
     print()
+
 
 
 if __name__ == "__main__":
