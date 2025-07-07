@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH -J qwen
+#SBATCH -J smol
 #SBATCH -N 1
 #SBATCH --ntasks=4
 #SBATCH --ntasks-per-node=4
 #SBATCH --gres=gpu:4
 #SBATCH --mem=64GB
-#SBATCH --time=18:00:00
+#SBATCH --time=24:00:00
 
 # According to Olympe's documentation for PyTorch,
 # and assuming "hate" is a clone of our your PyTorch environment that includes torchrun:
