@@ -407,27 +407,15 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
                 print("\tBatch: ", i)
                 batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
-                print("Squeezed Batch")
-                for k, v in batch.items():
-                    print(f"{k}: {v.shape}")
+                # print("Squeezed Batch")
+                # for k, v in batch.items():
+                #     print(f"{k}: {v.shape}")
 
-                print("Unsqueezed Batch")
-                for k, v in batch_unsqueezed.items():
-                    print(f"{k}: {v.shape}")
+                # print("Unsqueezed Batch")
+                # for k, v in batch_unsqueezed.items():
+                #     print(f"{k}: {v.shape}")
 
                 try:
-                    output = model(**batch_unsqueezed)
-                    logits = output.logits
-                    val_loss = loss_f(logits, batch_unsqueezed["labels"])
-
-                    val_losses.append(val_loss.detach().item())
-
-                except Exception as e:
-
-                    print()
-                    print(e)
-                    print("Switching Batch Size to squeezed")
-
                     output = model.module.model(**batch)
                     # print(output)
                     logits = output.logits
@@ -438,6 +426,16 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
                     val_loss = loss_f(logits, batch["labels"])
                     val_losses.append(val_loss.detach().item())
 
+                except Exception as e:
+                    print("Switching Batch Size to unsqueezed")
+                    output = model(**batch_unsqueezed)
+                    logits = output.logits
+                    val_loss = loss_f(logits, batch_unsqueezed["labels"])
+
+                    val_losses.append(val_loss.detach().item())
+
+                    print()
+                    print(e)
 
                 if mode != None:
                     break
@@ -491,7 +489,7 @@ def train(  model,
     global_training_losses = []
     global_validation_losses = []
     model.train()
-    with torch.cuda.amp.autocast(dtype=torch.float32):
+    with torch.amp.autocast('cuda', dtype=torch.float32):
 
     # for task in tasks/dataset - train, eval
         for epoch in tqdm(range(n_epochs)):
@@ -514,35 +512,37 @@ def train(  model,
                 print("\tBatch: ", i)
                 batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
-                print("Squeezed Batch")
-                for k, v in batch.items():
-                    print(f"{k}: {v.shape}")
+                # print("Squeezed Batch")
+                # for k, v in batch.items():
+                #     print(f"{k}: {v.shape}")
 
-                print("Unsqueezed Batch")
-                for k, v in batch_unsqueezed.items():
-                    print(f"{k}: {v.shape}")
+                # print("Unsqueezed Batch")
+                # for k, v in batch_unsqueezed.items():
+                #     print(f"{k}: {v.shape}")
 
                 # print(batch["input_ids"].shape)
                 # print(batch["attention_mask"].shape)
                 # print(batch["labels"].shape)
                 try:
-                    output = model.module.model(**batch_unsqueezed)
+                    output = model.module.model(**batch)
                     # print(output)
                     logits = output.logits
                     # print("Shape Logits")
                     # print(logits.shape)
                     # print("Shape Labels")
                     # print(batch["labels"].shape)
-                    loss = loss_f(logits, batch_unsqueezed["labels"])
-                    print("Checking that the model type is the continual learner to do the cls")
-                    print(type(model.module))
-                    print(type(model.module.cl))
-                    # print(dir(model.module))
+                    loss = loss_f(logits, batch["labels"])
+                    if i == 0:
+                        print("Checking that the model type is the continual learner to do the cls")
+                        print(type(model.module))
+                        print(type(model.module.cl))
+                        print(model.module.cl)
+                        # print(dir(model.module))
                     if model.module.cl:
-                        batch_unsqueezed['logits'] = logits  # needed for LwF
-                        loss += model.module.cl.compute_regularization(batch_unsqueezed)
-                        model.module.cl.pre_backward(batch_unsqueezed)
-                    print("CL regularization and backward computed")
+                        batch['logits'] = logits  # needed for LwF
+                        loss += model.module.cl.compute_regularization(batch)
+                        model.module.cl.pre_backward(batch)
+                    # print("CL regularization and backward computed")
 
                     loss.backward()
 
@@ -550,7 +550,7 @@ def train(  model,
                     # needed agem (A-GEM)
                     if model.module.cl:
                         model.module.cl.post_backward()
-                    print("CL post backward computed")
+                    # print("CL post backward computed")
 
                     optimizer.step()
                     optimizer.zero_grad()
@@ -561,24 +561,21 @@ def train(  model,
 
                     print()
                     print(e)
-                    print("Switching Batch Size to squeezed")
+                    print("Switching Batch Size to Unsqueezed")
 
-                    output = model.module.model(**batch)
+                    output = model.module.model(**batch_unsqueezed)
                     # print(output)
                     logits = output.logits
                     # print("Shape Logits")
                     # print(logits.shape)
                     # print("Shape Labels")
-                    # print(batch["labels"].shape)
-                    loss = loss_f(logits, batch["labels"])
-                    print("Checking that the model type is the continual learner to do the cls")
-                    print(type(model.module))
-                    print(type(model.module.cl))
+                    # print(batch_unsqueezed["labels"].shape)
+                    loss = loss_f(logits, batch_unsqueezed["labels"])
                     # print(dir(model.module))
                     if model.module.cl:
-                        batch['logits'] = logits  # needed for LwF
-                        loss += model.module.cl.compute_regularization(batch)
-                        model.module.cl.pre_backward(batch)
+                        batch_unsqueezed['logits'] = logits  # needed for LwF
+                        loss += model.module.cl.compute_regularization(batch_unsqueezed)
+                        model.module.cl.pre_backward(batch_unsqueezed)
                     print("CL regularization and backward computed")
 
                     loss.backward()
@@ -1011,7 +1008,7 @@ class AutoContinualLearner(nn.Module):
         self.cl = None
 
     def init_cl(self, technique, lora_config, **kwargs):
-        """Initialize continual learning technique"""
+        """Init the continual learning technique"""
         self.model = get_peft_model(self.model, lora_config).to(self.device)
         self.n_params_lora = sum(t.numel() for t in self.model.parameters())
         self.n_trainable_params_lora = sum(t.numel() for t in self.model.parameters() if t.requires_grad)
@@ -1403,55 +1400,73 @@ def main(
 if __name__ == "__main__":
 
     mode=None
-    batch_size=4
+    batch_size=2
     models = [  "Models/SmolLM2-360M-Instruct", 
                 # "Models/Llama-3.2-1B-Instruct", 
                 # "Models/Qwen2.5-0.5B-Instruct",
                 "Models/TinyLlama-1.1b-Chat-v1.0", ]
 
-    for model_id in models:
-        if model_id.strip("Models/") not in os.listdir("Models") :
-            print(model_id.strip("Models/") + " NOT IN MODELS")
-            print()
-            print(os.listdir("Models"))
-            continue
+    cl_technique = ["vainilla_finetune", "ewc", "agem", "mas"]
+
+    main(
+        type_experiment="from_expl_to_impl",
+        cl_technique="vainilla_finetune",
+        model_id = "Models/SmolLM2-360M-Instruct",
+        training_order=["explicit_hs", "implicit_hs"],
+        testing_order=["explicit_hs", "implicit_hs"],
+        batch_size = batch_size,
+        n_epochs = 8,
+        lr = 1e-4,
+        lora_r = 8,
+        exp_setup = exp_setup,
+        mode = mode,
+        dataset_path="df_from_exp_to_imp.csv",
+        )
+
+
+    # for model_id in models:
+    #     if model_id.strip("Models/") not in os.listdir("Models") :
+    #         print(model_id.strip("Models/") + " NOT IN MODELS")
+    #         print()
+    #         print(os.listdir("Models"))
+    #         continue
         
-        main(
-            type_experiment="from_expl_to_impl",
-            cl_technique="vainilla_finetune",
-            model_id = model_id,
-            training_order=["explicit_hs", "implicit_hs"],
-            testing_order=["explicit_hs", "implicit_hs"],
-            batch_size = batch_size,
-            n_epochs = 8,
-            lr = 1e-4,
-            lora_r = 8,
-            exp_setup = exp_setup,
-            mode = mode,
-            dataset_path="df_from_exp_to_imp.csv",
-            )
+    #     main(
+    #         type_experiment="from_expl_to_impl",
+    #         cl_technique="vainilla_finetune",
+    #         model_id = model_id,
+    #         training_order=["explicit_hs", "implicit_hs"],
+    #         testing_order=["explicit_hs", "implicit_hs"],
+    #         batch_size = batch_size,
+    #         n_epochs = 8,
+    #         lr = 1e-4,
+    #         lora_r = 8,
+    #         exp_setup = exp_setup,
+    #         mode = mode,
+    #         dataset_path="df_from_exp_to_imp.csv",
+    #         )
 
-    cl_techniques = ["ewc","agem", "mas"]
-    for cl_technique in cl_techniques:
-        # "Models/Qwen2.5-0.5B", "Models/TinyLlama", 
+    # cl_techniques = ["ewc","agem", "mas"]
+    # for cl_technique in cl_techniques:
+    #     # "Models/Qwen2.5-0.5B", "Models/TinyLlama", 
 
-        for model_id in models:
-            if model_id.strip("Models/") not in os.listdir("Models") :
-                print(model_id.strip("Models/") + " NOT IN MODELS")
-                print()
-                print(os.listdir("Models"))
-                continue
-            main(
-                type_experiment="from_expl_to_impl",
-                cl_technique=cl_technique,
-                model_id = model_id,
-                training_order=["explicit_hs", "implicit_hs"],
-                testing_order=["explicit_hs", "implicit_hs"],
-                batch_size = batch_size,
-                n_epochs = 8,
-                lr = 1e-4,
-                lora_r = 8,
-                exp_setup = exp_setup,
-                mode = mode,
-                dataset_path="df_from_exp_to_imp.csv",
-                )   
+    #     for model_id in models:
+    #         if model_id.strip("Models/") not in os.listdir("Models") :
+    #             print(model_id.strip("Models/") + " NOT IN MODELS")
+    #             print()
+    #             print(os.listdir("Models"))
+    #             continue
+    #         main(
+    #             type_experiment="from_expl_to_impl",
+    #             cl_technique=cl_technique,
+    #             model_id = model_id,
+    #             training_order=["explicit_hs", "implicit_hs"],
+    #             testing_order=["explicit_hs", "implicit_hs"],
+    #             batch_size = batch_size,
+    #             n_epochs = 8,
+    #             lr = 1e-4,
+    #             lora_r = 8,
+    #             exp_setup = exp_setup,
+    #             mode = mode,
+    #             dataset_path="df_from_exp_to_imp.csv",
+    #             )   
