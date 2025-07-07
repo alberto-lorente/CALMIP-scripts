@@ -780,7 +780,7 @@ def continual_training(model,
         # continue
 
 
-        model, train_vals, tests = train(   model=model,
+        model, tests, train_vals = train(   model=model,
                                             model_id=model_id,
                                             tokenizer=tokenizer,
                                             base_prompt=base_prompt,
@@ -1402,8 +1402,8 @@ def main(
 
 if __name__ == "__main__":
 
-    mode="test"
-    batch_size=2
+    mode=None
+    batch_size=4
     models = [  "Models/SmolLM2-360M-Instruct", 
                 # "Models/Llama-3.2-1B-Instruct", 
                 # "Models/Qwen2.5-0.5B-Instruct",
