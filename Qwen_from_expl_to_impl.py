@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import pandas as pd 
 import numpy as np 
 import seaborn as sns 
@@ -417,7 +414,7 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
                 # batch.to(device)
                 batch_unsqueezed = batch
                 print("\tBatch: ", i)
-                batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
+                batch = {k:torch.squeeze(v, dim=1).to(device) for k,v in batch.items()}
 
                 # print("Squeezed Batch")
                 # for k, v in batch.items():
@@ -526,7 +523,7 @@ def train(  model,
                 gc.collect()
                 batch_unsqueezed = batch
                 print("\tBatch: ", i)
-                batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
+                batch = {k:torch.squeeze(v, dim=1).to(device) for k,v in batch.items()}
 
                 for k, v in batch.items():
                     if v.shape[0] != batch_size:

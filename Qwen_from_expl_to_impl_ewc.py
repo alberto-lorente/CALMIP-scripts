@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import pandas as pd 
 import numpy as np 
 import seaborn as sns 
@@ -42,6 +39,18 @@ from peft import LoraConfig, get_peft_model
 
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 
+
+def log_failed_batch(batch):
+    
+    print("FAILED UNSQUEEZED BATCH")
+    if "failed_batches.json" not in list(os.listdir()):
+        with open("failed_batches.json", "w") as f:
+            json.dump([], f)
+    with open("failed_batches.json", "r") as f:
+        failed_batches = json.load(f)
+    failed_batches.append(batch)
+    with open("failed_batches.json", "w") as f:
+        json.dump(failed_batches, f)
 
 def log_hf():
     
@@ -427,15 +436,19 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
                     val_losses.append(val_loss.detach().item())
 
                 except Exception as e:
-                    print("Switching Batch Size to unsqueezed")
-                    output = model(**batch_unsqueezed)
-                    logits = output.logits
-                    val_loss = loss_f(logits, batch_unsqueezed["labels"])
+                    
+                    try:
+                        print("Switching Batch Size to unsqueezed")
+                        output = model(**batch_unsqueezed)
+                        logits = output.logits
+                        val_loss = loss_f(logits, batch_unsqueezed["labels"])
 
-                    val_losses.append(val_loss.detach().item())
+                        val_losses.append(val_loss.detach().item())
 
-                    print()
-                    print(e)
+                        print()
+                        print(e)
+                    except:
+                        log_failed_batch(batch)
 
                 if mode != None:
                     break
@@ -512,17 +525,12 @@ def train(  model,
                 print("\tBatch: ", i)
                 batch = {k:torch.squeeze(v).to(device) for k,v in batch.items()}
 
-                # print("Squeezed Batch")
-                # for k, v in batch.items():
-                #     print(f"{k}: {v.shape}")
+                for k, v in batch.items():
+                    if v.shape[0] != batch_size:
+                        print(f"{k}: {v.shape}")
+                        print()
+                        continue
 
-                # print("Unsqueezed Batch")
-                # for k, v in batch_unsqueezed.items():
-                #     print(f"{k}: {v.shape}")
-
-                # print(batch["input_ids"].shape)
-                # print(batch["attention_mask"].shape)
-                # print(batch["labels"].shape)
                 try:
                     output = model.module.model(**batch)
                     # print(output)
@@ -561,35 +569,48 @@ def train(  model,
 
                     print()
                     print(e)
-                    print("Switching Batch Size to Unsqueezed")
 
-                    output = model.module.model(**batch_unsqueezed)
-                    # print(output)
-                    logits = output.logits
-                    # print("Shape Logits")
-                    # print(logits.shape)
-                    # print("Shape Labels")
-                    # print(batch_unsqueezed["labels"].shape)
-                    loss = loss_f(logits, batch_unsqueezed["labels"])
-                    # print(dir(model.module))
-                    if model.module.cl:
-                        batch_unsqueezed['logits'] = logits  # needed for LwF
-                        loss += model.module.cl.compute_regularization(batch_unsqueezed)
-                        model.module.cl.pre_backward(batch_unsqueezed)
-                    print("CL regularization and backward computed")
+                    print("-------------CHECKING SIZES-----------")
+                    print("Squeezed Batch")
+                    for k, v in batch.items():
+                        print(f"{k}: {v.shape}")
 
-                    loss.backward()
+                    print("Unsqueezed Batch")
+                    for k, v in batch_unsqueezed.items():
+                        print(f"{k}: {v.shape}")
+
+                    try:
+                        print("TRYING UNSQUEEZED BATCH")
+                        output = model.module.model(**batch_unsqueezed)
+                        # print(output)
+                        logits = output.logits
+                        # print("Shape Logits")
+                        # print(logits.shape)
+                        # print("Shape Labels")
+                        # print(batch_unsqueezed["labels"].shape)
+                        loss = loss_f(logits, batch_unsqueezed["labels"])
+                        # print(dir(model.module))
+                        if model.module.cl:
+                            batch_unsqueezed['logits'] = logits  # needed for LwF
+                            loss += model.module.cl.compute_regularization(batch_unsqueezed)
+                            model.module.cl.pre_backward(batch_unsqueezed)
+                        print("CL regularization and backward computed")
+
+                        loss.backward()
 
 
-                    # needed agem (A-GEM)
-                    if model.module.cl:
-                        model.module.cl.post_backward()
-                    print("CL post backward computed")
+                        # needed agem (A-GEM)
+                        if model.module.cl:
+                            model.module.cl.post_backward()
+                        print("CL post backward computed")
 
-                    optimizer.step()
-                    optimizer.zero_grad()
+                        optimizer.step()
+                        optimizer.zero_grad()
 
-                    train_losses.append(loss.detach().item())
+                        train_losses.append(loss.detach().item())
+
+                    except:
+                        log_failed_batch(batch)
 
 
                 if mode != None:
@@ -1056,6 +1077,7 @@ def main(
     tokenizer = AutoTokenizer.from_pretrained(model_id + "/Tokenizer")
     if tokenizer.pad_token is None and "Llama" in model_id: tokenizer.pad_token = '<|finetune_right_pad_id|>'
     elif tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
+
     tokenizer.chat_template = open(model_id + "/Tokenizer/chat_template.jinja").read()
 
     # print(tokenizer.chat_template)
@@ -1379,6 +1401,7 @@ def main(
             print("Train Log couldn't be saved.")
             print(e)
 
+    model_name = ""
     if local_rank == 0:
         print("_________________________________")
         print("Saving the model and Tokenizer")
@@ -1394,6 +1417,8 @@ def main(
     print(experiment_json_name.replace(".json", "") + " DONE")
     print()
     print("_________________________________")
+    print()
+
     print()
 
 if __name__ == "__main__":
