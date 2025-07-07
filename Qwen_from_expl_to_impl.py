@@ -1402,10 +1402,19 @@ def main(
 
 if __name__ == "__main__":
 
-    mode=None
+    mode="test"
     batch_size=2
-# "Models/Qwen2.5-0.5B", "Models/TinyLlama", 
-    for model_id in ["Models/Llama-3.2-1B-Instruct"]:
+    models = [  "Models/SmolLM2-360M-Instruct", 
+                # "Models/Llama-3.2-1B-Instruct", 
+                # "Models/Qwen2.5-0.5B-Instruct",
+                "Models/TinyLlama-1.1b-Chat-v1.0", ]
+
+    for model_id in models:
+        if model_id.strip("Models/") not in os.listdir("Models") :
+            print(model_id.strip("Models/") + " NOT IN MODELS")
+            print()
+            print(os.listdir("Models"))
+            continue
         
         main(
             type_experiment="from_expl_to_impl",
@@ -1422,41 +1431,11 @@ if __name__ == "__main__":
             dataset_path="df_from_exp_to_imp.csv",
             )
 
-
-        # main(
-        #     type_experiment="explicit",
-        #     cl_technique="vainilla_finetune",
-        #     model_id = model_id,
-        #     training_order=["explicit_hs"],
-        #     testing_order=["explicit_hs", "implicit_hs"],
-        #     batch_size = 4,
-        #     n_epochs = 8,
-        #     lr = 1e-4,
-        #     lora_r = 8,
-        #     exp_setup = exp_setup,
-        #     mode = mode,
-        #     dataset_path="df_from_exp_to_imp.csv",
-        #     )
-
-        # main(
-        #     type_experiment="implicit",
-        #     cl_technique="vainilla_finetune",
-        #     model_id = model_id,
-        #     training_order=["implicit_hs"],
-        #     testing_order=["explicit_hs", "implicit_hs"],
-        #     batch_size = 4,
-        #     n_epochs = 8,
-        #     lr = 1e-4,
-        #     lora_r = 8,
-        #     exp_setup = exp_setup,
-        #     mode = mode,
-        #     dataset_path="df_from_exp_to_imp.csv",
-        #     )
     cl_techniques = ["ewc","agem", "mas"]
     for cl_technique in cl_techniques:
         # "Models/Qwen2.5-0.5B", "Models/TinyLlama", 
 
-        for model_id in ["Models/SmolLM2-360M-Instruct", "Models/Llama-3.2-1B-Instruct", "Models/Qwen2.5-0.5B-Instruct", "Models/TinyLlama-1.1b-Chat-v1.0", ]:
+        for model_id in models:
             if model_id.strip("Models/") not in os.listdir("Models") :
                 print(model_id.strip("Models/") + " NOT IN MODELS")
                 print()
@@ -1473,6 +1452,6 @@ if __name__ == "__main__":
                 lr = 1e-4,
                 lora_r = 8,
                 exp_setup = exp_setup,
-                mode = "test",
+                mode = mode,
                 dataset_path="df_from_exp_to_imp.csv",
                 )   
