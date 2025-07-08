@@ -194,11 +194,17 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
     model.eval()
     with torch.cuda.amp.autocast(dtype=torch.float32):
         with torch.no_grad():
-            # print("TESTING DS")
-            # print(ds)
-            # print()
+            print("TESTING DS")
+            print(ds)
+            print()
             # for i, test_item in enumerate(ds["test"]):
             for i, test_item in enumerate(ds):
+                print("Type of the ds")
+                print(type(ds))
+                print("Test item type")
+                print(type(test_item))
+                print("full test item")
+                print(test_item)
                 # print("TESTING ITEM")
                 # print(test_item)
                 # print(i)
@@ -272,8 +278,9 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
 
                 full_generation.append(pred)
                 predicted_strings.append(pred)
-                # print("PRED COMPUTED")
-                # print(pred)
+                print("PRED COMPUTED")
+                print(pred)
+                print()
                 pred_label = translate_prediction_to_label(pred)
                 # print("PRED LABEL COMPUTED")
                 # print(pred_label)
@@ -678,6 +685,8 @@ def train(  model,
         for idx, test_ds in enumerate(test_datasets):
             test_data_name = str(list(test_ds.keys())[0])
             test_loader = list(test_ds.values())[0]
+            print("Test Loader type:")
+            print(type(test_loader))
             print("TESTING - " + test_data_name)
             print(test_loader)
             # print("-------------------------------------------------------")
@@ -822,7 +831,7 @@ def continual_training(model,
                                             n_epochs=n_epochs, 
                                             train_loader=data_loaders_train[time], 
                                             validation_loader=data_loaders_val[time], 
-                                            test_datasets=testing_datasets, # actually will have to be the full datasets since we are not using dataloaders but the whole ds and then doing df["test"]
+                                            test_datasets=test_datasets, # actually will have to be the full datasets since we are not using dataloaders but the whole ds and then doing df["test"]
                                             type_experiment=type_experiment, 
                                             cl_technique=cl_technique, 
                                             time=time,
@@ -1435,6 +1444,7 @@ def main(
     print()
     print("_________________________________")
     print()
+
 
 
 if __name__ == "__main__":
