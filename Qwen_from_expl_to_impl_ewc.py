@@ -44,15 +44,15 @@ from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_sco
 def log_failed_batch(batch):
     
     print("FAILED UNSQUEEZED BATCH")
-    if "failed_batches.json" not in list(os.listdir()):
-        with open("failed_batches.json", "w") as f:
-            json.dump([], f)
-    with open("failed_batches.json", "r") as f:
-        failed_batches = json.load(f)
-    batch = {k:list(v.detach().cpu().numpy()) for k,v in batch.items()}
-    failed_batches.append(batch)
-    with open("failed_batches.json", "w") as f:
-        json.dump(failed_batches, f)
+    # if "failed_batches.json" not in list(os.listdir()):
+    #     with open("failed_batches.json", "w") as f:
+    #         json.dump([], f)
+    # with open("failed_batches.json", "r") as f:
+    #     failed_batches = json.load(f)
+    # batch = {k:list(v.detach().cpu().numpy()) for k,v in batch.items()}
+    # failed_batches.append(batch)
+    # with open("failed_batches.json", "w") as f:
+    #     json.dump(failed_batches, f)
 
 def log_hf():
     
@@ -537,8 +537,8 @@ def train(  model,
                     output = model.module.model(**batch)
                     # print(output)
                     logits = output.logits
-                    # print("Shape Logits")
-                    # print(logits.shape)
+                    print("Shape Logits")
+                    print(logits.shape)
                     # print("Shape Labels")
                     # print(batch["labels"].shape)
                     loss = loss_f(logits, batch["labels"])
@@ -650,6 +650,7 @@ def train(  model,
             print("Final Validation Losses:", global_validation_losses)
 
         if model.module.cl:
+            # batch = {k:torch.squeeze(v, dim=1).to(device) for k,v in batch.items()}
             model.module.cl.post_task_update(train_loader)
 
         print("-----------POST TRAINING CL UPDATES COMPLETED---------")
@@ -908,7 +909,7 @@ class CLTechniques:
         elif self.technique == "lwf" and self.old_model:
             with torch.no_grad():
                 logits = inputs['logits']
-                actual_inputs = {k:torch.squeeze(v).to(self.device) for k,v in inputs.items() if k != "logits"}
+                actual_inputs = {k:torch.squeeze(v, dim=1).to(self.device) for k,v in inputs.items() if k != "logits"}
                 old_outputs = self.old_model(**actual_inputs)
             return self.lwf_lambda * KLDivLoss(reduction='batchmean')(
                 torch.log_softmax(logits/self.temperature, dim=1),
@@ -930,8 +931,8 @@ class CLTechniques:
             # Store current gradient
             self.model.zero_grad()
             for inputs_mem, labels_mem in self.memory:
-                inputs_mem = {k:torch.squeeze(v).to(self.device) for k,v in inputs_mem.items()}
-                labels_mem = torch.squeeze(labels_mem).to(self.device)
+                inputs_mem = {k:torch.squeeze(v, dim=1).to(self.device) for k,v in inputs_mem.items()}
+                labels_mem = torch.squeeze(labels_mem, dim=1).to(self.device)
                 outputs = self.model(**inputs_mem)
                 loss = loss_f(outputs.logits, labels_mem)
                 loss.backward()
@@ -960,9 +961,9 @@ class CLTechniques:
             self.model.eval()
             for batch in dataloader:
                 self.model.zero_grad()
-                inputs = {k:torch.squeeze(v).to(self.device) for k, v in batch.items()
+                inputs = {k:torch.squeeze(v, dim=1).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
-                labels = batch['labels'].to(self.device)
+                labels = torch.squeeze(batch['labels'], dim=1).to(self.device)
 
                 # outputs = self.model(**inputs, labels=labels)
                 outputs = self.model(**inputs)
@@ -983,9 +984,9 @@ class CLTechniques:
             # Update memory buffer
             self.memory = []
             for batch in dataloader:
-                inputs = {k: torch.squeeze(v).to(self.device) for k, v in batch.items()
+                inputs = {k: torch.squeeze(v, dim=1).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
-                labels = torch.squeeze(batch['labels']).to(self.device)
+                labels = torch.squeeze(batch['labels'], dim=1).to(self.device)
                 self.memory.append((inputs, labels))
                 if len(self.memory) >= self.mem_size:
                     break
@@ -1000,7 +1001,7 @@ class CLTechniques:
             self.model.eval()
             for batch in dataloader:
                 self.model.zero_grad()
-                inputs = {k: torch.squeeze(v).to(self.device) for k, v in batch.items()
+                inputs = {k: torch.squeeze(v, dim=1).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
 
                 outputs = self.model(**inputs)

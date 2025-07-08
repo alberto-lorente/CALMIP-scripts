@@ -1426,7 +1426,7 @@ if __name__ == "__main__":
     batch_size=2
     models = [  "Models/SmolLM2-360M-Instruct", 
                 # "Models/Llama-3.2-1B-Instruct", 
-                # "Models/Qwen2.5-0.5B-Instruct",
+                # "Models/Qwen3-0.5B-Instruct",
                 "Models/TinyLlama-1.1b-Chat-v1.0", ]
 
     cl_technique = ["vainilla_finetune", "ewc", "agem", "mas"]
