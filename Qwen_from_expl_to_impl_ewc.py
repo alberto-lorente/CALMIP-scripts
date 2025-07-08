@@ -54,6 +54,15 @@ def log_failed_batch(batch):
     # with open("failed_batches.json", "w") as f:
     #     json.dump(failed_batches, f)
 
+# for some reason the data collator is outputing dimensions batch_size x 1 x seq_length, need to squeeze THE INPUTS, NOT THE LOGITS when needed
+def squeeze_notneeded_dimension(x):
+    print("X SHAPE")
+    print(x.shape)
+    x = x.squeeze(1) if x.dim() == 3 and x.size(1) == 1 else x
+    print("X NEW SHAPE")
+    print(x.shape)
+    return x
+
 def log_hf():
     
     load_dotenv("env_vars.env")
@@ -218,7 +227,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                 # print("CHAT TEMPLATE COMPUTED")
                 # print(chat_template)
                 input_dict = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False)
-                input_dict = {k: v.to(device) for k, v in input_dict.items()}
+                input_dict = {k: squeeze_notneeded_dimension(v).to(device) for k, v in input_dict.items()}
                 input_ids_tokenized = input_dict["input_ids"]
                 attention_mask = input_dict["attention_mask"]
                 
@@ -416,7 +425,7 @@ def validate_model(model, validation_loader, device, world_size, local_rank, mod
                 # batch.to(device)
                 batch_unsqueezed = batch
                 print("\tBatch: ", i)
-                batch = {k:torch.squeeze(v, dim=1).to(device) for k,v in batch.items()}
+                batch = {k:squeeze_notneeded_dimension(v).to(device) for k,v in batch.items()}
 
                 # print("Squeezed Batch")
                 # for k, v in batch.items():
@@ -525,7 +534,7 @@ def train(  model,
                 gc.collect()
                 batch_unsqueezed = batch
                 print("\tBatch: ", i)
-                batch = {k:torch.squeeze(v, dim=1).to(device) for k,v in batch.items()}
+                batch = {k:squeeze_notneeded_dimension(v).to(device) for k,v in batch.items()}
 
                 for k, v in batch.items():
                     if v.shape[0] != batch_size:
@@ -550,8 +559,11 @@ def train(  model,
                         # print(dir(model.module))
                     if model.module.cl:
                         batch['logits'] = logits  # needed for LwF
+                        print("Works before computing regularization")
                         loss += model.module.cl.compute_regularization(batch)
+                        print("Works after computing regularization")
                         model.module.cl.pre_backward(batch)
+                        print("Works after pre_backward")
                     # print("CL regularization and backward computed")
 
                     loss.backward()
@@ -559,7 +571,9 @@ def train(  model,
 
                     # needed agem (A-GEM)
                     if model.module.cl:
+                        print("Works before post_backward")
                         model.module.cl.post_backward()
+                        print("Works after post_backward")
                     # print("CL post backward computed")
 
                     optimizer.step()
@@ -909,7 +923,7 @@ class CLTechniques:
         elif self.technique == "lwf" and self.old_model:
             with torch.no_grad():
                 logits = inputs['logits']
-                actual_inputs = {k:torch.squeeze(v, dim=1).to(self.device) for k,v in inputs.items() if k != "logits"}
+                actual_inputs = {k:squeeze_notneeded_dimension(v).to(self.device) for k,v in inputs.items() if k != "logits"}
                 old_outputs = self.old_model(**actual_inputs)
             return self.lwf_lambda * KLDivLoss(reduction='batchmean')(
                 torch.log_softmax(logits/self.temperature, dim=1),
@@ -931,8 +945,8 @@ class CLTechniques:
             # Store current gradient
             self.model.zero_grad()
             for inputs_mem, labels_mem in self.memory:
-                inputs_mem = {k:torch.squeeze(v, dim=1).to(self.device) for k,v in inputs_mem.items()}
-                labels_mem = torch.squeeze(labels_mem, dim=1).to(self.device)
+                inputs_mem = {k:squeeze_notneeded_dimension(v).to(self.device) for k,v in inputs_mem.items()}
+                labels_mem = squeeze_notneeded_dimension(labels_mem).to(self.device)
                 outputs = self.model(**inputs_mem)
                 loss = loss_f(outputs.logits, labels_mem)
                 loss.backward()
@@ -961,9 +975,9 @@ class CLTechniques:
             self.model.eval()
             for batch in dataloader:
                 self.model.zero_grad()
-                inputs = {k:torch.squeeze(v, dim=1).to(self.device) for k, v in batch.items()
+                inputs = {k:squeeze_notneeded_dimension(v).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
-                labels = torch.squeeze(batch['labels'], dim=1).to(self.device)
+                labels = squeeze_notneeded_dimension(batch['labels']).to(self.device)
 
                 # outputs = self.model(**inputs, labels=labels)
                 outputs = self.model(**inputs)
@@ -984,9 +998,9 @@ class CLTechniques:
             # Update memory buffer
             self.memory = []
             for batch in dataloader:
-                inputs = {k: torch.squeeze(v, dim=1).to(self.device) for k, v in batch.items()
+                inputs = {k:squeeze_notneeded_dimension(v).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
-                labels = torch.squeeze(batch['labels'], dim=1).to(self.device)
+                labels = squeeze_notneeded_dimension(batch['labels']).to(self.device)
                 self.memory.append((inputs, labels))
                 if len(self.memory) >= self.mem_size:
                     break
@@ -1001,7 +1015,7 @@ class CLTechniques:
             self.model.eval()
             for batch in dataloader:
                 self.model.zero_grad()
-                inputs = {k: torch.squeeze(v, dim=1).to(self.device) for k, v in batch.items()
+                inputs = {k:squeeze_notneeded_dimension(v).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
 
                 outputs = self.model(**inputs)
@@ -1032,7 +1046,7 @@ class AutoContinualLearner(nn.Module):
         self.cl = None
 
     def init_cl(self, technique, lora_config, **kwargs):
-        """Init the continual learning technique"""
+        """Init the continual learning technique AND peft version of the model"""
         self.model = get_peft_model(self.model, lora_config).to(self.device)
         self.n_params_lora = sum(t.numel() for t in self.model.parameters())
         self.n_trainable_params_lora = sum(t.numel() for t in self.model.parameters() if t.requires_grad)
@@ -1423,9 +1437,11 @@ def main(
     print()
 
 
+
+
 if __name__ == "__main__":
 
-    mode=None
+    mode="Test"
     batch_size=2
     models = [  "Models/SmolLM2-360M-Instruct", 
                 # "Models/Llama-3.2-1B-Instruct", 
