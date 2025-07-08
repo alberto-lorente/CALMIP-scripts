@@ -1403,13 +1403,12 @@ def main(
             print("Train Log couldn't be saved.")
             print(e)
 
-    model_name = ""
-    if local_rank == 0:
-        print("_________________________________")
-        print("Saving the model and Tokenizer")
-        model_name = model_id.split("/")[-1]
-        model.module.model.save_pretrained(f"alberto-lorente/{experiment_json_name}/model_test")
-        tokenizer.save_pretrained(f"alberto-lorente/{experiment_json_name}/tokenizer_test")
+    # if local_rank == 0:
+    #     print("_________________________________")
+    #     print("Saving the model and Tokenizer")
+    #     model_name = model_id.split("/")[-1]
+    #     model.module.model.save_pretrained(f"alberto-lorente/{experiment_json_name}/model_test")
+    #     tokenizer.save_pretrained(f"alberto-lorente/{experiment_json_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
     print()
