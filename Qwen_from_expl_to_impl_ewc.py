@@ -15,6 +15,7 @@ import emoji
 import json
 from huggingface_hub import whoami, HfFolder
 from copy import deepcopy
+from datetime import timedelta
 
 
 import gc
@@ -62,7 +63,7 @@ def log_hf():
 
 def setup():
     try:
-        dist.init_process_group("nccl")
+        dist.init_process_group("nccl", timeout=timedelta(seconds=18000))
         # dist.init_process_group("gloo")
         local_rank = int(os.environ["LOCAL_RANK"])
         torch.cuda.set_device(local_rank)
