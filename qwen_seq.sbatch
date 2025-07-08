@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J smol
+#SBATCH -J explicit-implicit-individual
 #SBATCH -N 1
 #SBATCH --ntasks=4
 #SBATCH --ntasks-per-node=4
@@ -32,27 +32,3 @@ torchrun \
         --rdzv_backend=c10d \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
         Qwen_from_expl_to_impl.py
-
-
-# torchrun \
-#         --nnodes ${SLURM_NNODES} \
-#         --nproc_per_node=4 \
-#         --rdzv_id ${RANDOM} \
-#         --rdzv_backend=c10d \
-#         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
-#         Qwen_from_expl_to_impl.py -> change to the other script
-
-# torchrun \
-#         --nnodes ${SLURM_NNODES} \
-#         --nproc_per_node=4 \
-#         --rdzv_id ${RANDOM} \
-#         --rdzv_backend=c10d \
-#         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
-
-# torchrun \
-#         --nnodes ${SLURM_NNODES} \
-#         --nproc_per_node=4 \
-#         --rdzv_id ${RANDOM} \
-#         --rdzv_backend=c10d \
-#         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
-#         Qwen_from_expl_to_impl.py -> change to the other script

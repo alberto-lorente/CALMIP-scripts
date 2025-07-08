@@ -56,11 +56,11 @@ def log_failed_batch(batch):
 
 # for some reason the data collator is outputing dimensions batch_size x 1 x seq_length, need to squeeze THE INPUTS, NOT THE LOGITS when needed
 def squeeze_notneeded_dimension(x):
-    print("X SHAPE")
-    print(x.shape)
+    # print("X SHAPE")
+    # print(x.shape)
     x = x.squeeze(1) if x.dim() == 3 and x.size(1) == 1 else x
-    print("X NEW SHAPE")
-    print(x.shape)
+    # print("X NEW SHAPE")
+    # print(x.shape)
     return x
 
 def log_hf():
@@ -231,8 +231,8 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                     {"role": "user", "content": formatted_prompt}
                 ]
                 chat_template = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-                # print("CHAT TEMPLATE COMPUTED")
-                # print(chat_template)
+                print("CHAT TEMPLATE COMPUTED")
+                print(chat_template)
                 input_dict = tokenizer(chat_template, return_tensors="pt", add_special_tokens=False)
                 input_dict = {k: squeeze_notneeded_dimension(v).to(device) for k, v in input_dict.items()}
                 input_ids_tokenized = input_dict["input_ids"]
@@ -277,7 +277,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                 # print(tokenizer.decode(seq, skip_special_tokens=True).strip())
                 pred = tokenizer.decode(seq[input_ids_tokenized.shape[1]:], skip_special_tokens=True)
 
-                full_generation.append(pred)
+                full_generation.append(seq)
                 predicted_strings.append(pred)
                 print("PRED COMPUTED")
                 print(pred)
@@ -863,8 +863,8 @@ def continual_training(model,
         # print("TRAIN RESULTS")
         # print(train_results)
 
-        if mode != None:
-            break
+        # if mode != None:
+        #     break
 
     return model, test_results, train_results
 
@@ -955,10 +955,22 @@ class CLTechniques:
             # Store current gradient
             self.model.zero_grad()
             for inputs_mem, labels_mem in self.memory:
+
                 inputs_mem = {k:squeeze_notneeded_dimension(v).to(self.device) for k,v in inputs_mem.items()}
                 labels_mem = squeeze_notneeded_dimension(labels_mem).to(self.device)
                 outputs = self.model(**inputs_mem)
-                loss = loss_f(outputs.logits, labels_mem)
+                logits = outputs.logits
+                print("MEMORY BATCH SHAPES:")
+                print(f"  logits: {logits.shape}")
+                print(f"  labels: {labels_mem.shape}")
+                print(f"  input_ids: {inputs_mem['input_ids'].shape}")
+                print(f"  attention_mask: {inputs_mem['attention_mask'].shape}")
+                print()
+                B, T, V = logits.shape
+                assert labels_mem.shape == (B, T), \
+                    f"Mismatch logits: {logits.shape}, labels: {labels_mem.shape}"
+
+                loss = loss_f(logits, labels_mem)
                 loss.backward()
 
             self.ref_grad = [p.grad.clone() for p in self.model.parameters() if p.requires_grad] # i think this should be with req grad
@@ -1011,9 +1023,19 @@ class CLTechniques:
                 inputs = {k:squeeze_notneeded_dimension(v).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
                 labels = squeeze_notneeded_dimension(batch['labels']).to(self.device)
+                print("STORING TO MEMORY:")
+                print({k: v.shape for k, v in inputs.items()}, "labels:", labels.shape)
+
                 self.memory.append((inputs, labels))
                 if len(self.memory) >= self.mem_size:
                     break
+                for i, (mem_inputs, mem_labels) in enumerate(self.memory):
+                    print(f"Memory example {i}:")
+                    for k, v in mem_inputs.items():
+                        print(f"{k}: {v.shape} | dtype: {v.dtype}")
+                    print(f"labels: {mem_labels.shape} | dtype: {mem_labels.dtype}")
+                print(f"Total memory stored: {len(self.memory)} examples")
+
 
         elif self.technique == "lwf":
             # Save model snapshot
@@ -1428,13 +1450,12 @@ def main(
             print("Train Log couldn't be saved.")
             print(e)
 
-    model_name = ""
-    if local_rank == 0:
-        print("_________________________________")
-        print("Saving the model and Tokenizer")
-        model_name = model_id.split("/")[-1]
-        model.module.model.save_pretrained(f"alberto-lorente/{experiment_json_name}/model_test")
-        tokenizer.save_pretrained(f"alberto-lorente/{experiment_json_name}/tokenizer_test")
+    # if local_rank == 0:
+    #     print("_________________________________")
+    #     print("Saving the model and Tokenizer")
+    #     model_name = model_id.split("/")[-1]
+    #     model.module.model.save_pretrained(f"alberto-lorente/{experiment_json_name}/model_test")
+    #     tokenizer.save_pretrained(f"alberto-lorente/{experiment_json_name}/tokenizer_test")
 
     print("RUN SUCCESSFULLY")
     print()
@@ -1445,9 +1466,6 @@ def main(
     print()
     print("_________________________________")
     print()
-
-
-
 
 if __name__ == "__main__":
 
