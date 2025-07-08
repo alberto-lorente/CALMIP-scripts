@@ -277,7 +277,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                 # print(tokenizer.decode(seq, skip_special_tokens=True).strip())
                 pred = tokenizer.decode(seq[input_ids_tokenized.shape[1]:], skip_special_tokens=True)
 
-                full_generation.append(seq)
+                full_generation.append(pred) # seq is a torch tensor
                 predicted_strings.append(pred)
                 print("PRED COMPUTED")
                 print(pred)
@@ -640,6 +640,10 @@ def train(  model,
                 if mode != None:
                     break
 
+            if len(train_losses) == 0:
+                print("NO TRAIN LOSSES")
+                continue
+
             epoch_loss = sum(train_losses) / len(train_losses) # loss on current device
 
             epoch_loss_tensor = torch.tensor(epoch_loss, device=device)
@@ -960,12 +964,12 @@ class CLTechniques:
                 labels_mem = squeeze_notneeded_dimension(labels_mem).to(self.device)
                 outputs = self.model(**inputs_mem)
                 logits = outputs.logits
-                print("MEMORY BATCH SHAPES:")
-                print(f"  logits: {logits.shape}")
-                print(f"  labels: {labels_mem.shape}")
-                print(f"  input_ids: {inputs_mem['input_ids'].shape}")
-                print(f"  attention_mask: {inputs_mem['attention_mask'].shape}")
-                print()
+                # print("MEMORY BATCH SHAPES:")
+                # print(f"  logits: {logits.shape}")
+                # print(f"  labels: {labels_mem.shape}")
+                # print(f"  input_ids: {inputs_mem['input_ids'].shape}")
+                # print(f"  attention_mask: {inputs_mem['attention_mask'].shape}")
+                # print()
                 B, T, V = logits.shape
                 assert labels_mem.shape == (B, T), \
                     f"Mismatch logits: {logits.shape}, labels: {labels_mem.shape}"
@@ -973,22 +977,29 @@ class CLTechniques:
                 loss = loss_f(logits, labels_mem)
                 loss.backward()
 
-            self.ref_grad = [p.grad.clone() for p in self.model.parameters() if p.requires_grad] # i think this should be with req grad
+            self.ref_grad =  {
+                                n: p.grad.clone()
+                                for n, p in self.model.named_parameters()
+                                if p.requires_grad and p.grad is not None
+                            } # added p.grad is not none
             self.model.zero_grad()
 
     def post_backward(self):
         """Operations after backward pass"""
         if self.technique == "agem" and hasattr(self, 'ref_grad'):
             # Project gradients
-            dot_product = sum(torch.sum(p.grad * g_ref)
-                        for p, g_ref in zip(self.model.parameters(), self.ref_grad) if p.requires_grad)
-            ref_norm = sum(torch.sum(g_ref * g_ref) for g_ref in self.ref_grad)
+            dot_product = sum(torch.sum(p.grad * self.ref_grad[n])
+                        for n,p in self.model.named_parameters()
+                        if p.requires_grad and p.grad is not None and n in self.ref_grad) # added p.grad is not none
+            ref_norm = sum(torch.sum(g * g) for g in self.ref_grad.values())
+
+            # ref_norm = sum(torch.sum(g_ref * g_ref) for g_ref in self.ref_grad if g_ref is not None) # added g_ref is not none
 
             if dot_product < 0:  # Negative interference
                 scale = dot_product / (ref_norm + 1e-8)
-                for p, g_ref in zip(self.model.parameters(), self.ref_grad):
-                    if p.grad is not None and p.requires_grad:
-                        p.grad -= scale * g_ref
+                for n, p in self.model.named_parameters():
+                    if p.grad is not None and p.requires_grad and n in self.ref_grad:
+                        p.grad -= scale * self.ref_grad[n]
 
     def post_task_update(self, dataloader=None):
         """Update after each task"""
@@ -1023,23 +1034,31 @@ class CLTechniques:
                 inputs = {k:squeeze_notneeded_dimension(v).to(self.device) for k, v in batch.items()
                         if k in ['input_ids', 'attention_mask']}
                 labels = squeeze_notneeded_dimension(batch['labels']).to(self.device)
-                print("STORING TO MEMORY:")
-                print({k: v.shape for k, v in inputs.items()}, "labels:", labels.shape)
+                # added one by one to the memory instead of the batches, check if the error was coming from this
+                batch_size = inputs["input_ids"].shape[0]
+                for i in range(batch_size):
+                    sample_inputs = {
+                        k: v[i:i+1] 
+                        for k, v in inputs.items()
+                    }
+                    sample_labels = labels[i:i+1]
+                    self.memory.append((sample_inputs, sample_labels))
+                    if len(self.memory) >= self.mem_size:
+                        break
 
-                self.memory.append((inputs, labels))
-                if len(self.memory) >= self.mem_size:
-                    break
-                for i, (mem_inputs, mem_labels) in enumerate(self.memory):
-                    print(f"Memory example {i}:")
-                    for k, v in mem_inputs.items():
-                        print(f"{k}: {v.shape} | dtype: {v.dtype}")
-                    print(f"labels: {mem_labels.shape} | dtype: {mem_labels.dtype}")
-                print(f"Total memory stored: {len(self.memory)} examples")
+
+                # self.memory.append((inputs, labels))
+                # for i, (mem_inputs, mem_labels) in enumerate(self.memory):
+                #     print(f"Memory example {i}:")
+                #     for k, v in mem_inputs.items():
+                #         print(f"{k}: {v.shape} | dtype: {v.dtype}")
+                #     print(f"labels: {mem_labels.shape} | dtype: {mem_labels.dtype}")
+                # print(f"Total memory stored: {len(self.memory)} examples")
 
 
         elif self.technique == "lwf":
             # Save model snapshot
-            self.old_model = deepcopy(self.model)
+            self.old_model = deepcopy(self.model.to(self.device)).to(self.device)
             self.old_model.eval()
 
         elif self.technique == "mas":
@@ -1466,6 +1485,10 @@ def main(
     print()
     print("_________________________________")
     print()
+
+
+
+
 
 if __name__ == "__main__":
 

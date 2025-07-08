@@ -1058,7 +1058,7 @@ class CLTechniques:
 
         elif self.technique == "lwf":
             # Save model snapshot
-            self.old_model = deepcopy(self.model)
+            self.old_model = deepcopy(self.model.to(self.device)).to(self.device)
             self.old_model.eval()
 
         elif self.technique == "mas":
@@ -1487,22 +1487,25 @@ def main(
     print()
 
 
+
+
+
 if __name__ == "__main__":
 
-    mode=None
+    mode="test"
     batch_size=2
     models = [  "Models/SmolLM2-360M-Instruct", 
                 # "Models/Llama-3.2-1B-Instruct", 
-                # "Models/Qwen3-0.5B-Instruct",
+                # "Models/Qwen2.5-0.5B-Instruct",
                 "Models/TinyLlama-1.1b-Chat-v1.0", ]
 
     cl_technique = ["vainilla_finetune", "ewc", "agem", "mas"]
 
     main(
-        type_experiment="implicit",
-        cl_technique="vainilla_finetune",
+        type_experiment="from_expl_to_impl",
+        cl_technique="lwf",
         model_id = "Models/SmolLM2-360M-Instruct",
-        training_order=["implicit_hs"],
+        training_order=["explicit_hs", "implicit_hs"],
         testing_order=["explicit_hs", "implicit_hs"],
         batch_size = batch_size,
         n_epochs = 8,

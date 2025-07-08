@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J cl-llms
+#SBATCH -J explicit-implicit-individual
 #SBATCH -N 1
 #SBATCH --ntasks=4
 #SBATCH --ntasks-per-node=4
@@ -8,6 +8,7 @@
 #SBATCH --time=24:00:00
 
 # According to Olympe's documentation for PyTorch,
+# and assuming "hate" is a clone of our your PyTorch environment that includes torchrun:
 
 module load conda/24.11.1
 conda activate hate
@@ -30,9 +31,23 @@ torchrun \
         --rdzv_id ${RANDOM} \
         --rdzv_backend=c10d \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
-        Qwen_from_expl_to_impl_mas.py
+        Qwen_from_expl_to_impl.py
 
-echo "--------------------------MAS TRAINING DONE --------------------------"
+# torchrun \
+#         --nnodes ${SLURM_NNODES} \
+#         --nproc_per_node=4 \
+#         --rdzv_id ${RANDOM} \
+#         --rdzv_backend=c10d \
+#         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
+#         Qwen_impl.py
+
+# torchrun \
+#         --nnodes ${SLURM_NNODES} \
+#         --nproc_per_node=4 \
+#         --rdzv_id ${RANDOM} \
+#         --rdzv_backend=c10d \
+#         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
+#         Qwen_expl.py
 
 torchrun \
         --nnodes ${SLURM_NNODES} \
@@ -40,9 +55,7 @@ torchrun \
         --rdzv_id ${RANDOM} \
         --rdzv_backend=c10d \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
-        Qwen_from_expl_to_impl_ewc.py
-
-echo "--------------------------EWC TRAINING DONE --------------------------"
+        Qwen_zero_shot.py
 
 torchrun \
         --nnodes ${SLURM_NNODES} \
@@ -50,8 +63,6 @@ torchrun \
         --rdzv_id ${RANDOM} \
         --rdzv_backend=c10d \
         --rdzv_endpoint "${MASTER_ADDR}:${MASTER_PORT}" \
-        Qwen_from_expl_to_impl_lwf.py
+        Qwen_from_expl_to_impl_agem.py
 
-echo "--------------------------LWF TRAINING DONE --------------------------"
-
-
+echo "--------------------------AGEM TRAINING DONE --------------------------"
