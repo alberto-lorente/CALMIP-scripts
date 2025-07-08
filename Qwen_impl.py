@@ -197,6 +197,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
             print("TESTING DS")
             print(ds)
             print()
+            print(len(ds), "len ds")
             # for i, test_item in enumerate(ds["test"]):
             for i, test_item in enumerate(ds):
                 print("Type of the ds")
@@ -223,7 +224,7 @@ def test_model(model, tokenizer, base_prompt, ds, device, mode=None, verbose=Fal
                 # prompt_plus_messages = base_prompt.format(clean_post)
                 # print("FORMATTED PROMPT")
                 # print(formatted_prompt)
-
+                print(len(formatted_prompt), "len formatted_prompt")
 
                 messages = [
                     {"role": "system", "content": "You are a helpful assistant"},
@@ -1444,6 +1445,7 @@ def main(
     print()
     print("_________________________________")
     print()
+
 
 
 
